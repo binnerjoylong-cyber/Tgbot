@@ -14,9 +14,10 @@ except Exception as e:
     print("Static FFmpeg setup warning:", e)
 
 FFMPEG_PATH = shutil.which("ffmpeg")
+DENO_PATH = shutil.which("deno") or "/root/.deno/bin/deno"
 
 from threading import Thread
-from urllib.parse import quote
+from urllib.parse import quote, urlparse, parse_qs
 from flask import Flask
 
 from telegram import (
@@ -191,8 +192,7 @@ TRANSLATIONS = {
             '<tg-emoji emoji-id="5305545479814161889">💬</tg-emoji> <b>Support & Downloader Help</b>\n\n'
             '<tg-emoji emoji-id="5305655375142364109">📺</tg-emoji> '
             '<b>ቪዲዮ/ፎቶ ለማውረድ:</b> የ Tiktok, Instagram, Facebook, Reddit, Twitch, Vimeo, SoundCloud, Threads እና ሌሎች ሊንክ ቀጥታ ለቦቱ ይላኩ።\n\n'
-            '<tg-emoji emoji-id="5305289658677108341">📹</tg-emoji> '
-            '<b>Video to Audio:</b> ማናቸውንም ቪዲዮ ከስልክዎ ይላኩ፣ ወደ MP3 Audio ቀይሮ ይልክልዎታል።\n\n'
+            '<tg-emoji emoji-id="5305289658677108341">📹</tg-emoji> <b>Video to Audio:</b> ማናቸውንም ቪዲዮ ከስልክዎ ይላኩ፣ ወደ MP3 Audio ቀይሮ ይልክልዎታል።\n\n'
             '<tg-emoji emoji-id="5949327894567195412">👩‍💻</tg-emoji> ለአድሚን መልዕክት ለመላክም እዚሁ መጻፍ ይችላሉ።'
         )
     },
@@ -263,7 +263,7 @@ TRANSLATIONS = {
         "done_msg": "✅ <b>تم! تم تعيين لغتك.</b>",
         "loading": '<tg-emoji emoji-id="5305254783542667121">⏳</tg-emoji> <b>جاري التحميل...</b>',
         "video_converted": '<tg-emoji emoji-id="5305534793935527938">🎵</tg-emoji> <b>الصوت المستخرج</b>\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>تم التحويل بواسطة</b> @{bot_username} & @mame_posts',
-        "video_downloaded": '<tg-emoji emoji-id="530762354187772738">🚀</tg-emoji> <b>تم التحميل بواسطة</b> @{bot_username} & @mame_posts\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>استمتع!</b>',
+        "video_downloaded": '<tg-emoji emoji-id="530762354187772738">🚀</tg-emoji> <b>Downloaded with</b> @{bot_username} & @mame_posts\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Enjoy!</b>',
         "size_limit": "⚠️ <b>حجم الملف أكبر من 50 ميغابايت!</b>",
         "fail_download": "💔 <b>تعذر تحميل الملف! يرجى التأكد من أن الرابط عام.</b>",
         "photo_download": '📸 <b>الصورة / الصورة المصغرة المحملة</b>\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>تم التحميل بواسطة</b> @{bot_username}',
@@ -288,7 +288,8 @@ TRANSLATIONS = {
         ),
         "order": (
             '<tg-emoji emoji-id="5197304993920616826">📢</tg-emoji> <b>للإعلان على قناة @mame_posts</b>\n\n'
-            '<tg-emoji emoji-id="5305634553140912174">👇</tg-emoji> يرجى إرسال المنشور الذي تريد الإعلان عنه أدناه لعرض الأسعار <tg-emoji emoji-id="5305739801314501775">ℹ️</tg-emoji>'
+            '<tg-emoji emoji-id="5305634553140912174">👇</tg-emoji> '
+            'يرجى إرسال المنشور الذي تريد الإعلان عنه أدناه لعرض الأسعار <tg-emoji emoji-id="5305739801314501775">ℹ️</tg-emoji>'
         ),
         "payment": (
             '<tg-emoji emoji-id="5186349709169525403">💳</tg-emoji> <b>طرق الدفع</b>\n\n'
@@ -300,7 +301,8 @@ TRANSLATIONS = {
         ),
         "support": (
             '<tg-emoji emoji-id="5305545479814161889">💬</tg-emoji> <b>الدعم والمساعدة في التحميل</b>\n\n'
-            '<tg-emoji emoji-id="5305655375142364109">📺</tg-emoji> <b>لتحميل الفيديوهات/الصور:</b> أرسل روابط تيك توك، إنستغرام، فيسبوك، ريديت، تويتش وغيرها مباشرة.\n\n'
+            '<tg-emoji emoji-id="5305655375142364109">📺</tg-emoji> '
+            '<b>لتحميل الفيديوهات/الصور:</b> أرسل روابط تيك توك، إنستغرام، فيسبوك، ريديت، تويتش وغيرها مباشرة.\n\n'
             '<tg-emoji emoji-id="5305289658677108341">📹</tg-emoji> <b>تحويل الفيديو إلى صوت:</b> أرسل أي فيديو لتحويله إلى ملف صوتي MP3.\n\n'
             '<tg-emoji emoji-id="5949327894567195412">👩‍💻</tg-emoji> يمكنك كتابة رسائلك هنا للتواصل مع المسؤول مباشرة.'
         )
@@ -616,27 +618,30 @@ async def convert_video_to_audio(update, context):
                     pass
 
 # ============================================================
-# MODERN URL DOWNLOAD ENGINE WITH DENO & EJS VERIFIED FIX
+# PERFECT URL CLEANER & MODERN DOWNLOAD ENGINE
 # ============================================================
 
-def unshorten_url(url: str) -> str:
-    try:
-        session = requests.Session()
-        session.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
-        resp = session.head(url, allow_redirects=True, timeout=10)
-        return resp.url
-    except Exception:
-        return url
-
 def clean_url(raw_url: str) -> str:
-    url = unshorten_url(raw_url)
-    url = re.sub(r'(\?|&)si=[^&]+', '', url)
-    url = re.sub(r'(\?|&)feature=[^&]+', '', url)
+    """Properly formats YouTube Watch / Shorts URLs without destroying query structure."""
+    url = raw_url.strip()
 
-    shorts_match = re.search(r'youtube\.com/shorts/([a-zA-Z0-9_-]+)', url)
+    # YouTube Shorts converter
+    shorts_match = re.search(r'(?:youtube\.com|youtu\.be)/shorts/([a-zA-Z0-9_-]+)', url)
     if shorts_match:
-        video_id = shorts_match.group(1)
-        return f"https://www.youtube.com/watch?v={video_id}"
+        return f"https://www.youtube.com/watch?v={shorts_match.group(1)}"
+
+    # youtu.be short link converter
+    youtu_be_match = re.search(r'youtu\.be/([a-zA-Z0-9_-]+)', url)
+    if youtu_be_match:
+        return f"https://www.youtube.com/watch?v={youtu_be_match.group(1)}"
+
+    # Regular YouTube link - keep watch?v= intact, strip tracking params (?si=...)
+    if "youtube.com/watch" in url:
+        parsed = urlparse(url)
+        query_dict = parse_qs(parsed.query)
+        v = query_dict.get('v')
+        if v:
+            return f"https://www.youtube.com/watch?v={v[0]}"
 
     return url
 
@@ -651,9 +656,7 @@ def get_video_options(url: str, output_template: str):
         'writethumbnail': True,
         'merge_output_format': 'mp4',
         'format': 'bestvideo[ext=mp4][filesize<45M]+bestaudio[ext=m4a]/best[ext=mp4][filesize<50M]/best[filesize<50M]/best',
-        
-        # EXACT VERIFIED DENO SETTINGS:
-        'js_runtimes': {'deno': {'path': '/root/.deno/bin/deno'}},
+        'js_runtimes': {'deno': {'path': DENO_PATH}},
         'remote_components': ['ejs:github'],
     }
 
@@ -725,7 +728,6 @@ async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE
     sent_any = False
 
     try:
-        # Download media using verified Deno + EJS config
         await asyncio.to_thread(download_media_func, url, media_template)
 
         actual_video, actual_thumb = find_downloaded_file(media_prefix)
@@ -744,7 +746,7 @@ async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE
                         stderr=subprocess.DEVNULL
                     )
 
-                if os.path.exists(clean_thumb):
+                if os.path.exists(clean_thumb) and os.path.getsize(clean_thumb) > 0:
                     with open(clean_thumb, 'rb') as tf:
                         await update.message.reply_photo(
                             photo=tf,
@@ -758,10 +760,25 @@ async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE
 
         # 3. SEND VIDEO
         if actual_video and os.path.exists(actual_video):
-            if os.path.getsize(actual_video) <= 50 * 1024 * 1024:
+            file_size = os.path.getsize(actual_video)
+            if file_size > 0 and file_size <= 50 * 1024 * 1024:
                 await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_VIDEO)
+                
+                # Standardize to mp4 if needed
+                send_video_path = actual_video
+                if not actual_video.lower().endswith(".mp4"):
+                    fixed_mp4 = f"{media_prefix}_fixed.mp4"
+                    await asyncio.to_thread(
+                        subprocess.run,
+                        [ffmpeg_bin, "-y", "-i", actual_video, "-c", "copy", fixed_mp4],
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL
+                    )
+                    if os.path.exists(fixed_mp4) and os.path.getsize(fixed_mp4) > 0:
+                        send_video_path = fixed_mp4
+
                 try:
-                    with open(actual_video, 'rb') as vf:
+                    with open(send_video_path, 'rb') as vf:
                         await update.message.reply_video(
                             video=vf,
                             caption=f'<tg-emoji emoji-id="530762354187772738">🚀</tg-emoji> <b>Downloaded with</b> @{bot_username} & @mame_posts\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Enjoy!</b>',
@@ -772,16 +789,20 @@ async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE
                     sent_any = True
                 except Exception as vid_err:
                     print("reply_video failed, falling back to document:", vid_err)
-                    with open(actual_video, 'rb') as doc_file:
-                        await update.message.reply_document(
-                            document=doc_file,
-                            caption=f'<tg-emoji emoji-id="530762354187772738">🚀</tg-emoji> <b>Downloaded with</b> @{bot_username} & @mame_posts',
-                            reply_markup=reply_markup_share,
-                            parse_mode="HTML"
-                        )
-                    sent_any = True
+                    try:
+                        with open(send_video_path, 'rb') as doc_file:
+                            await update.message.reply_document(
+                                document=doc_file,
+                                filename=f"video_{update.message.message_id}.mp4",
+                                caption=f'<tg-emoji emoji-id="530762354187772738">🚀</tg-emoji> <b>Downloaded with</b> @{bot_username} & @mame_posts',
+                                reply_markup=reply_markup_share,
+                                parse_mode="HTML"
+                            )
+                        sent_any = True
+                    except Exception as doc_err:
+                        print("reply_document also failed:", doc_err)
 
-                # 4. EXTRACT & SEND BACKGROUND AUDIO / MUSIC (MP3)
+                # 4. EXTRACT & SEND AUDIO (MP3)
                 audio_output = f"audio_{user_id}_{update.message.message_id}.mp3"
                 cmd = [ffmpeg_bin, "-y", "-i", actual_video, "-vn", "-acodec", "libmp3lame", "-q:a", "2", audio_output]
                 await asyncio.to_thread(subprocess.run, cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -796,7 +817,7 @@ async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE
                             parse_mode="HTML"
                         )
                     sent_any = True
-            else:
+            elif file_size > 50 * 1024 * 1024:
                 await status_msg.edit_text(get_trans(user_id, "size_limit"), parse_mode="HTML")
                 return
 
