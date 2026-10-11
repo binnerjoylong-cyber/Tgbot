@@ -905,4 +905,178 @@ async def button_callback(update, context):
         return
 
 async def check_join(update, context):
-    query = update.callback
+    query = update.callback_query
+    user_id = query.from_user.id
+    try:
+        member = await context.bot.get_chat_member(chat_id=FORCE_CHANNEL, user_id=user_id)
+        if member.status in ["member", "administrator", "creator"]:
+            await query.answer()
+            try:
+                await query.edit_message_text(
+                    '<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>አሁን ቻናሉን ተቀላቅለዋል።</b>\n\nእባክዎ የላኩትን ሊንክ ደግመው ይላኩ።',
+                    parse_mode="HTML"
+                )
+            except Exception:
+                pass
+        else:
+            await query.answer("❌ እባክዎ መጀመሪያ Channel ይቀላቀሉ!", show_alert=True)
+    except Exception:
+        await query.answer("⚠️ Channel membership could not be verified.", show_alert=True)
+
+SUPPORTED_DOMAINS = [
+    "youtube.com", "youtu.be", "tiktok.com", "likee.video", "likee.com",
+    "pinterest.com", "pin.it", "instagram.com", "twitter.com", "x.com",
+    "facebook.com", "fb.watch", "reddit.com", "redd.it", "twitch.tv",
+    "vimeo.com", "vk.com", "ok.ru", "tumblr.com", "soundcloud.com", "threads.net"
+]
+
+async def handle_user_messages(update, context):
+    if not update.message:
+        return
+
+    user_id = update.effective_user.id
+    record_user_activity(user_id)
+
+    if update.message.video or update.message.video_note:
+        await convert_video_to_audio(update, context)
+        return
+
+    document = update.message.document
+    if document and document.mime_type and document.mime_type.startswith("video/"):
+        await convert_video_to_audio(update, context)
+        return
+
+    text = update.message.text or update.message.caption or ""
+
+    if text.strip() == "🏠 Menu":
+        await send_main_menu(update.effective_chat.id, context, user_id)
+        return
+
+    text_lower = text.lower()
+    is_supported_link = any(domain in text_lower for domain in SUPPORTED_DOMAINS)
+
+    if is_supported_link:
+        if not await is_joined(update, context):
+            await show_force_join(update, context)
+            return
+
+        url_match = re.search(r"https?://[^\s]+", text)
+        target_url = url_match.group(0).rstrip(".,!?)]}") if url_match else text.strip()
+        await handle_url_download(update, context, target_url)
+        return
+
+    # Forward other messages to Admin
+    username = f"@{update.effective_user.username}" if update.effective_user.username else "No username"
+    header_text = (
+        "📩 <b>New User Message</b>\n\n"
+        f"👤 <b>Name:</b> {update.effective_user.full_name}\n"
+        f"🔗 <b>Username:</b> {username}\n"
+        f"🆔 <b>ID:</b> <code>{user_id}</code>"
+    )
+
+    try:
+        header_msg = await context.bot.send_message(chat_id=ADMIN_ID, text=header_text, parse_mode="HTML")
+        forwarded_msg = await update.message.forward(chat_id=ADMIN_ID)
+
+        if "user_mapping" not in context.bot_data:
+            context.bot_data["user_mapping"] = {}
+
+        user_mapping = context.bot_data["user_mapping"]
+        user_mapping[str(header_msg.message_id)] = user_id
+        user_mapping[str(forwarded_msg.message_id)] = user_id
+
+        await update.message.reply_text("✅ መልዕክትዎ ተቀብለናል። Admin ያነበበውን መልስ ይልክልዎታል።")
+    except Exception as e:
+        print("Admin forwarding error:", e)
+
+async def admin_reply(update, context):
+    if not update.message or update.effective_user.id != ADMIN_ID:
+        return
+
+    replied_msg = update.message.reply_to_message
+    if not replied_msg:
+        return
+
+    user_mapping = context.bot_data.get("user_mapping", {})
+    target_user_id = None
+    replied_id_str = str(replied_msg.message_id)
+
+    if replied_id_str in user_mapping:
+        target_user_id = user_mapping[replied_id_str]
+
+    if not target_user_id and replied_msg.forward_from:
+        target_user_id = replied_msg.forward_from.id
+
+    if not target_user_id and replied_msg.text and "🆔 ID:" in replied_msg.text:
+        match = re.search(r"🆔 ID:\s*<code>(\d+)</code>", replied_msg.text)
+        if match:
+            target_user_id = int(match.group(1))
+
+    if not target_user_id and replied_msg.caption and "🆔 ID:" in replied_msg.caption:
+        match = re.search(r"🆔 ID:\s*<code>(\d+)</code>", replied_msg.caption)
+        if match:
+            target_user_id = int(match.group(1))
+
+    if target_user_id:
+        try:
+            await update.message.copy(chat_id=target_user_id)
+            await update.message.reply_text("✅ Reply sent to the user.")
+        except Exception as e:
+            await update.message.reply_text(f"❌ Could not send reply.\n{e}")
+    else:
+        await update.message.reply_text("❌ User ID could not be found.")
+
+async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE):
+    print("❌ ERROR:", context.error)
+
+# ============================================================
+# MAIN
+# ============================================================
+
+def main():
+    if not TOKEN:
+        raise RuntimeError("❌ BOT_TOKEN environment variable is missing!")
+
+    keep_alive()
+
+    application = (
+        ApplicationBuilder()
+        .token(TOKEN)
+        .post_init(post_init)
+        .build()
+    )
+
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("menu", start))
+    application.add_handler(CommandHandler("status", status_command))
+    application.add_handler(CommandHandler("rates", rates_command))
+    application.add_handler(CommandHandler("rate", rates_command))
+    application.add_handler(CommandHandler("payment", payment_command))
+    application.add_handler(CommandHandler("help", help_command))
+    application.add_handler(CommandHandler("broadcast", broadcast_command))
+
+    application.add_handler(CallbackQueryHandler(check_join, pattern=r"^check_join$"))
+    application.add_handler(CallbackQueryHandler(button_callback, pattern=r"^(cmd_|lang_)"))
+
+    admin_filter = filters.User(user_id=ADMIN_ID) & filters.REPLY & ~filters.COMMAND
+    application.add_handler(MessageHandler(admin_filter, admin_reply))
+
+    application.add_handler(MessageHandler(filters.VIDEO | filters.VIDEO_NOTE, convert_video_to_audio))
+
+    type_filter = (
+        filters.TEXT
+        | filters.PHOTO
+        | filters.Document.ALL
+        | filters.VOICE
+        | filters.AUDIO
+        | filters.Sticker.ALL
+    ) & ~filters.COMMAND
+    application.add_handler(MessageHandler(type_filter, handle_user_messages))
+
+    application.add_error_handler(error_handler)
+
+    print("🤖 Mame Posts Bot is running...")
+    application.run_polling(drop_pending_updates=True)
+
+if __name__ == "__main__":
+    main()
