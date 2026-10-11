@@ -150,7 +150,6 @@ TRANSLATIONS = {
         "loading": '<tg-emoji emoji-id="5305254783542667121">⏳</tg-emoji> <b>Loading|ይጠብቁ...</b>',
         "video_converted": '<tg-emoji emoji-id="5305534793935527938">🎵</tg-emoji> <b>ከቪዲዮ የተቀየረው (Extracted Audio)</b>\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Converted with</b> @{bot_username} & @mame_posts',
         "video_downloaded": '<tg-emoji emoji-id="530762354187772738">🚀</tg-emoji> <b>Downloaded with</b> @{bot_username} & @mame_posts\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Enjoy!</b>',
-        "size_limit": "⚠️ <b>ቪዲዮው ከ 50MB በላይ ስለሆነ በቴሌግራም መላክ አይቻልም!</b>",
         "fail_download": "💔 <b> የፈለጉትን File ማግኘት አልቻልኩም!</b>\n\nእባክዎ የላኩት ሊንክ private አለመሆኑን አረጋግጠው እንደገና ይሞክሩ።",
         "photo_download": '📸 <b>Downloaded Thumbnail/Photo</b>\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Downloaded with</b> @{bot_username}',
         "welcome": (
@@ -166,36 +165,10 @@ TRANSLATIONS = {
             '<b>And others Social Media | ሌሎችንም ሶሻል ሚድያ ማውረድ ይችላሉ!:</b> '
             '<tg-emoji emoji-id="5305466057278923962">📥</tg-emoji>'
         ),
-        "price": (
-            '<tg-emoji emoji-id="5447458260200214425">💰</tg-emoji> <b>የማስታወቂያ ዋጋዎች</b>\n\n'
-            '<tg-emoji emoji-id="5199628545457923796">📌</tg-emoji> 12 Hours — <b>በስምምነት ETB</b>\n'
-            '<tg-emoji emoji-id="5199628545457923796">📌</tg-emoji> 24 Hours — <b>500 ETB</b>\n'
-            '<tg-emoji emoji-id="5199628545457923796">📌</tg-emoji> 48 Hours — <b>700 ETB</b>\n\n'
-            'የፈለጉትን ምርጫ አሳውቀው የክፍያ አማራጮችን (payment method) ይጎብኙ '
-            '<tg-emoji emoji-id="5463249828450424568">🤝</tg-emoji>'
-        ),
-        "order": (
-            '<tg-emoji emoji-id="5197304993920616826">📢</tg-emoji> <b> @mame_posts ቻናል ላይ ማስታወቂያ ለማሰራት</b>\n\n'
-            '<tg-emoji emoji-id="5305634553140912174">👇</tg-emoji> '
-            'እባክዎ ማስታወቂያ ማሰራት የሚፈልጉትን Post ከስር ልከው የማስታወቂያ ዋጋዎችን ይመልከቱ '
-            '<tg-emoji emoji-id="5305739801314501775">ℹ️</tg-emoji>'
-        ),
-        "payment": (
-            '<tg-emoji emoji-id="5186349709169525403">💳</tg-emoji> <b>Payment Method</b>\n\n'
-            '<tg-emoji emoji-id="5961054379350955385">🏦</tg-emoji> <b>ንግድ ባንክ (CBE)</b>\n'
-            '<code>1000528274394</code>\n\nMohammed Seid\n\n'
-            '<tg-emoji emoji-id="5960632377339285724">📱</tg-emoji> <b>ቴሌ ብር (TELE BIRR)</b>\n'
-            '<code>+251963266849</code>\n\n'
-            '<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>ክፍያውን ሲፈጽሙ ስክሪን ሹቱን ከስር ይላኩ!</b>'
-        ),
-        "support": (
-            '<tg-emoji emoji-id="5305545479814161889">💬</tg-emoji> <b>Support & Downloader Help</b>\n\n'
-            '<tg-emoji emoji-id="5305655375142364109">📺</tg-emoji> '
-            '<b>ቪዲዮ/ፎቶ ለማውረድ:</b> የ Tiktok, Instagram, Facebook, Reddit, Twitch, Vimeo, SoundCloud, Threads እና ሌሎች ሊንክ ቀጥታ ለቦቱ ይላኩ።\n\n'
-            '<tg-emoji emoji-id="5305289658677108341">📹</tg-emoji> '
-            '<b>Video to Audio:</b> ማናቸውንም ቪዲዮ ከስልክዎ ይላኩ፣ ወደ MP3 Audio ቀይሮ ይልክልዎታል።\n\n'
-            '<tg-emoji emoji-id="5949327894567195412">👩‍💻</tg-emoji> ለአድሚን መልዕክት ለመላክም እዚሁ መጻፍ ይችላሉ።'
-        )
+        "price": '💰 12 Hours: በስምምነት | 24 Hours: 500 ETB | 48 Hours: 700 ETB',
+        "order": '📢 @mame_posts ቻናል ላይ ማስታወቂያ ለማሰራት',
+        "payment": '💳 CBE: <code>1000528274394</code> | Telebirr: <code>+251963266849</code>',
+        "support": '💬 Support and Help'
     },
     "en": {
         "btn_add": "Add a bot to the chat",
@@ -210,47 +183,13 @@ TRANSLATIONS = {
         "loading": '<tg-emoji emoji-id="5305254783542667121">⏳</tg-emoji> <b>Loading|Please wait...</b>',
         "video_converted": '<tg-emoji emoji-id="5305534793935527938">🎵</tg-emoji> <b>Extracted Audio</b>\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Converted with</b> @{bot_username} & @mame_posts',
         "video_downloaded": '<tg-emoji emoji-id="530762354187772738">🚀</tg-emoji> <b>Downloaded with</b> @{bot_username} & @mame_posts\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Enjoy!</b>',
-        "size_limit": "⚠️ <b>File is larger than 50MB! Telegram limit exceeded.</b>",
         "fail_download": "💔 <b>Could not download the file! Please check if link is public.</b>",
         "photo_download": '📸 <b>Downloaded Thumbnail/Photo</b>\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Downloaded with</b> @{bot_username}',
-        "welcome": (
-            'Hello <tg-emoji emoji-id="5305577086478489521">🚨</tg-emoji>\n\n'
-            '<tg-emoji emoji-id="5305739801314501775">✅</tg-emoji> '
-            '<b>My options (You can download video, photo, and audio from all Social Media):</b>\n\n'
-            '<tg-emoji emoji-id="5305290882742788410">🎵</tg-emoji> | <b>Tiktok & Likee: videos & photos</b>\n'
-            '<tg-emoji emoji-id="5305551797711053969">📸</tg-emoji> | <b>Pinterest & Instagram: reels, photos & stories</b>\n'
-            '<tg-emoji emoji-id="5305777524012262308">▶️</tg-emoji> | <b>YouTube: videos & music (Full & Shorts)</b>\n'
-            '<tg-emoji emoji-id="5305474827602140530">✖️</tg-emoji> | <b>Twitter (X): videos & voice</b>\n'
-            '<tg-emoji emoji-id="5305311717629142471">📘</tg-emoji> | <b>Facebook, Reddit, Twitch, Vimeo & Others</b>\n'
-            '<tg-emoji emoji-id="5305289658677108341">📹</tg-emoji> <b>Video to Audio Converter: Convert video to audio!</b>\n\n'
-            '<b>And other Social Media:</b> <tg-emoji emoji-id="5305466057278923962">📥</tg-emoji>'
-        ),
-        "price": (
-            '<tg-emoji emoji-id="5447458260200214425">💰</tg-emoji> <b>Advertising Rates</b>\n\n'
-            '<tg-emoji emoji-id="5199628545457923796">📌</tg-emoji> 12 Hours — <b>Negotiable ETB</b>\n'
-            '<tg-emoji emoji-id="5199628545457923796">📌</tg-emoji> 24 Hours — <b>500 ETB</b>\n'
-            '<tg-emoji emoji-id="5199628545457923796">📌</tg-emoji> 48 Hours — <b>700 ETB</b>\n\n'
-            'Choose your plan and proceed to Payment Method <tg-emoji emoji-id="5463249828450424568">🤝</tg-emoji>'
-        ),
-        "order": (
-            '<tg-emoji emoji-id="5197304993920616826">📢</tg-emoji> <b>To Advertise on @mame_posts Channel</b>\n\n'
-            '<tg-emoji emoji-id="5305634553140912174">👇</tg-emoji> Please send your promo post below and view our rates <tg-emoji emoji-id="5305739801314501775">ℹ️</tg-emoji>'
-        ),
-        "payment": (
-            '<tg-emoji emoji-id="5186349709169525403">💳</tg-emoji> <b>Payment Method</b>\n\n'
-            '<tg-emoji emoji-id="5961054379350955385">🏦</tg-emoji> <b>Commercial Bank of Ethiopia (CBE)</b>\n'
-            '<code>1000528274394</code>\n\nMohammed Seid\n\n'
-            '<tg-emoji emoji-id="5960632377339285724">📱</tg-emoji> <b>TELEBIRR</b>\n'
-            '<code>+251963266849</code>\n\n'
-            '<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Please send receipt screenshot after payment!</b>'
-        ),
-        "support": (
-            '<tg-emoji emoji-id="5305545479814161889">💬</tg-emoji> <b>Support & Downloader Help</b>\n\n'
-            '<tg-emoji emoji-id="5305655375142364109">📺</tg-emoji> '
-            '<b>To Download Video/Photo:</b> Send links from Tiktok, Instagram, Facebook, Reddit, Twitch, Vimeo, SoundCloud, Threads, etc.\n\n'
-            '<tg-emoji emoji-id="5305289658677108341">📹</tg-emoji> <b>Video to Audio:</b> Send any video to convert it to MP3 audio.\n\n'
-            '<tg-emoji emoji-id="5949327894567195412">👩‍💻</tg-emoji> You can write messages here to reach out to the Admin.'
-        )
+        "welcome": 'Hello 🚨\n\n<b>Download video, photo, and audio from all Social Media!</b>',
+        "price": '💰 24 Hours — 500 ETB | 48 Hours — 700 ETB',
+        "order": '📢 To Advertise on @mame_posts Channel',
+        "payment": '💳 CBE: <code>1000528274394</code> | Telebirr: <code>+251963266849</code>',
+        "support": '💬 Support and Help'
     },
     "ar": {
         "btn_add": "إضافة البوت إلى المجموعة",
@@ -263,50 +202,15 @@ TRANSLATIONS = {
         "btn_back": "العودة للقائمة",
         "done_msg": "✅ <b>تم! تم تعيين لغتك.</b>",
         "loading": '<tg-emoji emoji-id="5305254783542667121">⏳</tg-emoji> <b>جاري التحميل...</b>',
-        "video_converted": '<tg-emoji emoji-id="5305534793935527938">🎵</tg-emoji> <b>الصوت المستخرج</b>\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>تم التحويل بواسطة</b> @{bot_username} & @mame_posts',
-        "video_downloaded": '<tg-emoji emoji-id="530762354187772738">🚀</tg-emoji> <b>Downloaded with</b> @{bot_username} & @mame_posts\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Enjoy!</b>',
-        "size_limit": "⚠️ <b>حجم الملف أكبر من 50 ميغابايት!</b>",
-        "fail_download": "💔 <b>تعذر تحميل الملف! يرجى التأكد من أن الرابط عام.</b>",
-        "photo_download": '📸 <b>الصورة / الصورة المصغرة المحملة</b>\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>تم التحميل بواسطة</b> @{bot_username}',
-        "welcome": (
-            'مرحباً بك <tg-emoji emoji-id="5305577086478489521">🚨</tg-emoji>\n\n'
-            '<tg-emoji emoji-id="5305739801314501775">✅</tg-emoji> '
-            '<b>خياراتي (يمكنك تحميل وتعديل الفيديوهات والصور والصوتيات من جميع منصات التواصل الاجتماعي):</b>\n\n'
-            '<tg-emoji emoji-id="5305290882742788410">🎵</tg-emoji> | <b>Tiktok & Likee: مقاطع وصور</b>\n'
-            '<tg-emoji emoji-id="5305551797711053969">📸</tg-emoji> | <b>Pinterest & Instagram: ريلز، صور وستوري</b>\n'
-            '<tg-emoji emoji-id="5305777524012262308">▶️</tg-emoji> | <b>YouTube: فيديوهات وموسيقى (كامل وShorts)</b>\n'
-            '<tg-emoji emoji-id="5305474827602140530">✖️</tg-emoji> | <b>Twitter (X): فيديوهات وتغريدات صوتية</b>\n'
-            '<tg-emoji emoji-id="5305311717629142471">📘</tg-emoji> | <b>Facebook, Reddit, Twitch, Vimeo وغيرها</b>\n'
-            '<tg-emoji emoji-id="5305289658677108341">📹</tg-emoji> <b>تحويل الفيديو إلى صوت: يمكنك تحويل أي فيديو إلى ملف صوتي MP3!</b>\n\n'
-            '<b>والمزيد من منصات التواصل الاجتماعي:</b> <tg-emoji emoji-id="5305466057278923962">📥</tg-emoji>'
-        ),
-        "price": (
-            '<tg-emoji emoji-id="5447458260200214425">💰</tg-emoji> <b>أسعار الإعلانات</b>\n\n'
-            '<tg-emoji emoji-id="5199628545457923796">📌</tg-emoji> 12 ساعة — <b>حسب الاتفاق ETB</b>\n'
-            '<tg-emoji emoji-id="5199628545457923796">📌</tg-emoji> 24 ساعة — <b>500 ETB</b>\n'
-            '<tg-emoji emoji-id="5199628545457923796">📌</tg-emoji> 48 ساعة — <b>700 ETB</b>\n\n'
-            'اختر خطتك ثم انتقل إلى طرق الدفع <tg-emoji emoji-id="5463249828450424568">🤝</tg-emoji>'
-        ),
-        "order": (
-            '<tg-emoji emoji-id="5197304993920616826">📢</tg-emoji> <b>للإعلان على قناة @mame_posts</b>\n\n'
-            '<tg-emoji emoji-id="5305634553140912174">👇</tg-emoji> '
-            'يرجى إرسال المنشور الذي تريد الإعلان عنه أدناه لعرض الأسعار <tg-emoji emoji-id="5305739801314501775">ℹ️</tg-emoji>'
-        ),
-        "payment": (
-            '<tg-emoji emoji-id="5186349709169525403">💳</tg-emoji> <b>طرق الدفع</b>\n\n'
-            '<tg-emoji emoji-id="5961054379350955385">🏦</tg-emoji> <b>البنك التجاري الإثيوبي (CBE)</b>\n'
-            '<code>1000528274394</code>\n\nMohammed Seid\n\n'
-            '<tg-emoji emoji-id="5960632377339285724">📱</tg-emoji> <b>تلي بر (TELE BIRR)</b>\n'
-            '<code>+251963266849</code>\n\n'
-            '<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>يرجى إرسال صورة إيصال الدفع بعد التحويل!</b>'
-        ),
-        "support": (
-            '<tg-emoji emoji-id="5305545479814161889">💬</tg-emoji> <b>الدعم والمساعدة في التحميل</b>\n\n'
-            '<tg-emoji emoji-id="5305655375142364109">📺</tg-emoji> '
-            '<b>لتحميل الفيديوهات/الصور:</b> أرسل روابط تيك توክ፣ إنستغرام، فيسبوك، ريديت، تويتش وغيرها مباشرة.\n\n'
-            '<tg-emoji emoji-id="5305289658677108341">📹</tg-emoji> <b>تحويل الفيديو إلى صوت:</b> أرسل أي فيديو لتحويله إلى ملف صوتي MP3.\n\n'
-            '<tg-emoji emoji-id="5949327894567195412">👩‍💻</tg-emoji> يمكنك كتابة رسائلك هنا للتواصل مع المسؤول مباشرة.'
-        )
+        "video_converted": '<tg-emoji emoji-id="5305534793935527938">🎵</tg-emoji> <b>الصوت المستخرج</b>\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>تم التحويل بواسطة</b> @{bot_username}',
+        "video_downloaded": '<tg-emoji emoji-id="530762354187772738">🚀</tg-emoji> <b>تم التحميل بواسطة</b> @{bot_username}',
+        "fail_download": "💔 <b>تعذر تحميل الملف!</b>",
+        "photo_download": '📸 <b>الصورة المصغرة المحملة</b>',
+        "welcome": 'مرحباً بك! قم بتحميل مقاطع الفيديو والموسيقى بسهولة.',
+        "price": '💰 24 ساعة: 500 ETB',
+        "order": '📢 للإعلان على @mame_posts',
+        "payment": '💳 CBE: <code>1000528274394</code>',
+        "support": '💬 الدعم والمساعدة'
     }
 }
 
@@ -387,30 +291,15 @@ async def show_force_join(update, context):
     lang = get_user_language(user_id)
 
     if lang == "en":
-        text = (
-            '<tg-emoji emoji-id="6034962180875490251">🔒</tg-emoji> '
-            '<b>You must join the channel below to use the bot!</b>\n\n'
-            '1️⃣ <tg-emoji emoji-id="5267442591548320083">📢</tg-emoji> <b>Click Join Channel:</b>\n'
-            '2️⃣ <tg-emoji emoji-id="5305749202997911340">✅</tg-emoji> <b>Click I\'ve Joined and resend your link!</b>'
-        )
+        text = '🔒 <b>You must join the channel below to use the bot!</b>'
         btn_join_text = "Join Channel"
         btn_joined_text = "I've Joined"
     elif lang == "ar":
-        text = (
-            '<tg-emoji emoji-id="6034962180875490251">🔒</tg-emoji> '
-            '<b>يجب عليك الاشتراك في القناة أدناه لاستخدام البوت!</b>\n\n'
-            '1️⃣ <tg-emoji emoji-id="5267442591548320083">📢</tg-emoji> <b>اضغط على انضمام للقناة:</b>\n'
-            '2️⃣ <tg-emoji emoji-id="5305749202997911340">✅</tg-emoji> <b>اضغط على تم الانضمام وأعد إرسال الرابط!</b>'
-        )
+        text = '🔒 <b>يجب عليك الاشتراك في القناة أدناه لاستخدام البوت!</b>'
         btn_join_text = "انضمام للقناة"
         btn_joined_text = "تم الانضمام"
     else:
-        text = (
-            '<tg-emoji emoji-id="6034962180875490251">🔒</tg-emoji> '
-            '<b>ቦቱን ለመጠቀም ከታች ያለውን ቻናል መቀላቀል አለብዎት!</b>\n\n'
-            '1️⃣ <tg-emoji emoji-id="5267442591548320083">📢</tg-emoji> <b>Join Channel የሚለውን ይጫኑ:</b>\n'
-            '2️⃣ <tg-emoji emoji-id="5305749202997911340">✅</tg-emoji> <b>I\'ve Joined የሚለውን ተጭነው የላኩትን ደግመው ይላኩ!</b>'
-        )
+        text = '🔒 <b>ቦቱን ለመጠቀም ከታች ያለውን ቻናል መቀላቀል አለብዎት!</b>'
         btn_join_text = "Join Channel"
         btn_joined_text = "I've Joined"
 
@@ -418,20 +307,14 @@ async def show_force_join(update, context):
         [InlineKeyboardButton(text=btn_join_text, icon_custom_emoji_id="5767358836134382747", url=FORCE_CHANNEL_LINK)],
         [InlineKeyboardButton(text=btn_joined_text, icon_custom_emoji_id="5895288332581082241", callback_data="check_join")]
     ]
-    keyboard_normal = [
-        [InlineKeyboardButton(text=f"📢 {btn_join_text}", url=FORCE_CHANNEL_LINK)],
-        [InlineKeyboardButton(text=f"✅ {btn_joined_text}", callback_data="check_join")]
-    ]
-
     try:
         await update.message.reply_text(text=text, reply_markup=InlineKeyboardMarkup(keyboard_custom), parse_mode="HTML")
     except Exception:
-        await update.message.reply_text(text=text, reply_markup=InlineKeyboardMarkup(keyboard_normal), parse_mode="HTML")
+        await update.message.reply_text(text=text, reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(text=btn_join_text, url=FORCE_CHANNEL_LINK)]]), parse_mode="HTML")
 
 async def send_main_menu(chat_id, context, user_id):
     bot_username = get_bot_username(context)
     text = get_trans(user_id, "welcome")
-
     try:
         await context.bot.send_message(
             chat_id=chat_id,
@@ -539,9 +422,7 @@ async def broadcast_command(update, context):
         except Exception:
             fail_count += 1
 
-    await status_msg.edit_text(
-        f"✅ Broadcast completed.\n\nSuccessful: {success_count}\nFailed: {fail_count}"
-    )
+    await status_msg.edit_text(f"✅ Broadcast completed.\n\nSuccessful: {success_count}\nFailed: {fail_count}")
 
 # ============================================================
 # VIDEO TO AUDIO CONVERTER
@@ -578,9 +459,6 @@ async def convert_video_to_audio(update, context):
 
         tg_file = await video.get_file()
         await tg_file.download_to_drive(input_path)
-
-        if not os.path.exists(input_path) or os.path.getsize(input_path) == 0:
-            raise RuntimeError("Downloaded video is empty")
 
         ffmpeg_bin = FFMPEG_PATH if FFMPEG_PATH else "ffmpeg"
         cmd = [ffmpeg_bin, "-y", "-i", input_path, "-vn", "-acodec", "libmp3lame", "-q:a", "2", output_path]
@@ -619,23 +497,20 @@ async def convert_video_to_audio(update, context):
                     pass
 
 # ============================================================
-# SAFE URL CLEANER (NEVER DESTROYS YOUTUBE QUERY)
+# SAFE URL CLEANER
 # ============================================================
 
 def clean_url(raw_url: str) -> str:
     url = raw_url.strip()
 
-    # YouTube Shorts converter
     shorts_match = re.search(r'(?:youtube\.com|youtu\.be)/shorts/([a-zA-Z0-9_-]+)', url)
     if shorts_match:
         return f"https://www.youtube.com/watch?v={shorts_match.group(1)}"
 
-    # youtu.be short link converter
     youtu_be_match = re.search(r'youtu\.be/([a-zA-Z0-9_-]+)', url)
     if youtu_be_match:
         return f"https://www.youtube.com/watch?v={youtu_be_match.group(1)}"
 
-    # Standard YouTube watch URL: preserve ?v= perfectly
     if "youtube.com/watch" in url:
         parsed = urlparse(url)
         query = parse_qs(parsed.query)
@@ -646,21 +521,21 @@ def clean_url(raw_url: str) -> str:
     return url
 
 # ============================================================
-# MODERN URL DOWNLOAD ENGINE WITH FAIL-SAFE FORMAT SELECTION
+# UNLIMITED SIZE DOWNLOAD ENGINE (EXACT TESTED WORKING PARAMS)
 # ============================================================
 
 def get_ytdlp_options(output_template: str):
     opts = {
-        'quiet': False,       # Print errors to terminal if any
-        'no_warnings': False,
+        'quiet': True,
+        'no_warnings': True,
         'nocheckcertificate': True,
         'geo_bypass': True,
         'concurrent_fragment_downloads': 5,
         'outtmpl': output_template,
         'writethumbnail': True,
         
-        # Download best combined mp4 or single progressive stream
-        'format': 'b[ext=mp4]/best[ext=mp4]/bestvideo[ext=mp4]+bestaudio[ext=m4a]/best',
+        # UNLIMITED QUALITY - EXACT PARAMS YOU TESTED
+        'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best',
         'merge_output_format': 'mp4',
         
         # EXACT VERIFIED DENO SETTINGS:
@@ -678,16 +553,17 @@ def download_media(url: str, output_template: str):
         ydl.download([url])
 
 def find_downloaded_file(prefix: str):
-    """Finds downloaded video and thumb, ensuring video is actually non-empty!"""
     video_file = None
     thumb_file = None
     for f in os.listdir('.'):
         if f.startswith(prefix) and not f.endswith(('.part', '.ytdl', '.temp')):
+            # Ignore intermediate unmerged streams like .f399.mp4 / .f140.m4a
+            if re.search(r'\.f\d+\.', f):
+                continue
             ext = os.path.splitext(f)[1].lower()
             if ext in ['.jpg', '.jpeg', '.png', '.webp']:
                 thumb_file = f
             elif ext in ['.mp4', '.mkv', '.webm', '.mov', '.avi']:
-                # Ensure the video is actually greater than 50 KB (not empty!)
                 if os.path.getsize(f) > 50 * 1024:
                     video_file = f
     return video_file, thumb_file
@@ -704,7 +580,7 @@ async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE
     prefix = f"media_{user_id}_{update.message.message_id}"
     template = f"{prefix}.%(ext)s"
 
-    # 1. Direct Pinterest Image bypass
+    # Direct Pinterest Image bypass
     if "pinterest.com" in target_url or "pin.it" in target_url:
         try:
             res = requests.get(target_url, headers={'User-Agent': 'Mozilla/5.0'}, timeout=10)
@@ -729,7 +605,7 @@ async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE
         actual_video, actual_thumb = find_downloaded_file(prefix)
         ffmpeg_bin = FFMPEG_PATH or "ffmpeg"
 
-        # 2. SEND THUMBNAIL (Converted to JPG if WebP)
+        # 1. SEND THUMBNAIL
         if actual_thumb and os.path.exists(actual_thumb):
             clean_thumb = actual_thumb
             try:
@@ -753,56 +629,57 @@ async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE
             except Exception as te:
                 print("Thumbnail send failed:", te)
 
-        # 3. SEND VIDEO (GUARANTEED VALID NON-EMPTY FILE)
+        # 2. SEND VIDEO (ANY SIZE - DIRECT BUFFER)
         if actual_video and os.path.exists(actual_video):
             file_size = os.path.getsize(actual_video)
-            print(f"✅ Video Downloaded Successfully: {actual_video} ({file_size / (1024*1024):.2f} MB)")
+            print(f"✅ Downloaded file ready: {actual_video} ({file_size / (1024*1024):.2f} MB)")
             
-            if 0 < file_size <= 50 * 1024 * 1024:
+            caption_text = f'<tg-emoji emoji-id="530762354187772738">🚀</tg-emoji> <b>Downloaded with</b> @{bot_username} & @mame_posts\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Enjoy!</b>'
+            
+            video_sent = False
+            # Try sending as video
+            try:
                 await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_VIDEO)
-                caption_text = f'<tg-emoji emoji-id="530762354187772738">🚀</tg-emoji> <b>Downloaded with</b> @{bot_username} & @mame_posts\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Enjoy!</b>'
-                
+                with open(actual_video, 'rb') as vf:
+                    await update.message.reply_video(
+                        video=vf,
+                        caption=caption_text,
+                        parse_mode="HTML",
+                        supports_streaming=True
+                    )
+                video_sent = True
+                sent_any = True
+            except Exception as vid_err:
+                print("reply_video error, falling back to document:", vid_err)
+
+            # If reply_video fails or file is large, send as document
+            if not video_sent:
                 try:
-                    with open(actual_video, 'rb') as vf:
-                        await update.message.reply_video(
-                            video=vf,
+                    await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_DOCUMENT)
+                    with open(actual_video, 'rb') as doc_file:
+                        await update.message.reply_document(
+                            document=doc_file,
                             caption=caption_text,
-                            parse_mode="HTML",
-                            supports_streaming=True
-                        )
-                    sent_any = True
-                except Exception as vid_err:
-                    print("reply_video failed, trying document fallback:", vid_err)
-                    try:
-                        with open(actual_video, 'rb') as doc_file:
-                            await update.message.reply_document(
-                                document=doc_file,
-                                caption=caption_text,
-                                parse_mode="HTML"
-                            )
-                        sent_any = True
-                    except Exception as doc_err:
-                        print("Document fallback failed:", doc_err)
-
-                # 4. EXTRACT & SEND AUDIO (MP3)
-                audio_output = f"audio_{user_id}_{update.message.message_id}.mp3"
-                cmd = [ffmpeg_bin, "-y", "-i", actual_video, "-vn", "-acodec", "libmp3lame", "-q:a", "2", audio_output]
-                await asyncio.to_thread(subprocess.run, cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
-                if os.path.exists(audio_output) and os.path.getsize(audio_output) > 1000:
-                    await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.RECORD_VOICE)
-                    with open(audio_output, 'rb') as af:
-                        await update.message.reply_audio(
-                            audio=af,
-                            caption=f'<tg-emoji emoji-id="5307705891313721642">🎧</tg-emoji> <b>Extracted Audio / BGM (MP3)</b>\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Downloaded with</b> @{bot_username}',
                             parse_mode="HTML"
                         )
                     sent_any = True
-            else:
-                await status_msg.edit_text(get_trans(user_id, "size_limit"), parse_mode="HTML")
-                return
-        else:
-            print("❌ No valid video file found on disk! File might be 0 bytes or download failed.")
+                except Exception as doc_err:
+                    print("Document fallback error:", doc_err)
+
+            # 3. EXTRACT & SEND AUDIO (MP3)
+            audio_output = f"audio_{user_id}_{update.message.message_id}.mp3"
+            cmd = [ffmpeg_bin, "-y", "-i", actual_video, "-vn", "-acodec", "libmp3lame", "-q:a", "2", audio_output]
+            await asyncio.to_thread(subprocess.run, cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+            if os.path.exists(audio_output) and os.path.getsize(audio_output) > 1000:
+                await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.RECORD_VOICE)
+                with open(audio_output, 'rb') as af:
+                    await update.message.reply_audio(
+                        audio=af,
+                        caption=f'<tg-emoji emoji-id="5307705891313721642">🎧</tg-emoji> <b>Extracted Audio / BGM (MP3)</b>\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Downloaded with</b> @{bot_username}',
+                        parse_mode="HTML"
+                    )
+                sent_any = True
 
     except Exception as e:
         print("Download engine error:", e)
@@ -895,7 +772,7 @@ async def button_callback(update, context):
             f'🆔 <b>ID:</b> <code>{user_id}</code>\n\n'
             f'💬 <b>Your Messages:</b> {count}\n'
             f'👥 <b>Bot Users:</b> {total}\n\n'
-            f'🔥 <b>Engagement: Active</b>'
+            '🔥 <b>Engagement: Active</b>'
         )
         await query.edit_message_text(msg, reply_markup=get_back_keyboard(user_id), parse_mode="HTML")
         return
@@ -981,14 +858,14 @@ def main():
 
     keep_alive()
 
-    # Network timeouts increased to 300s to avoid large file upload timeout
+    # Network timeouts extended to 600s (10 minutes) for large/unlimited video uploads
     application = (
         ApplicationBuilder()
         .token(TOKEN)
         .post_init(post_init)
         .connect_timeout(60.0)
-        .read_timeout(300.0)
-        .write_timeout(300.0)
+        .read_timeout(600.0)
+        .write_timeout(600.0)
         .build()
     )
 
