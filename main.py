@@ -150,20 +150,19 @@ TRANSLATIONS = {
         "loading": '<tg-emoji emoji-id="5305254783542667121">⏳</tg-emoji> <b>Loading|ይጠብቁ...</b>',
         "video_converted": '<tg-emoji emoji-id="5305534793935527938">🎵</tg-emoji> <b>ከቪዲዮ የተቀየረው (Extracted Audio)</b>\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Converted with</b> @{bot_username} & @mame_posts',
         "video_downloaded": '<tg-emoji emoji-id="530762354187772738">🚀</tg-emoji> <b>Downloaded with</b> @{bot_username} & @mame_posts\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Enjoy!</b>',
+        "size_limit": "⚠️ <b>ቪዲዮው ከ 50MB በላይ ስለሆነ በቴሌግራም መላክ አይቻልም!</b>",
         "fail_download": "💔 <b> የፈለጉትን File ማግኘት አልቻልኩም!</b>\n\nእባክዎ የላኩት ሊንክ private አለመሆኑን አረጋግጠው እንደገና ይሞክሩ።",
         "photo_download": '📸 <b>Downloaded Thumbnail/Photo</b>\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Downloaded with</b> @{bot_username}',
         "welcome": (
             'Hello <tg-emoji emoji-id="5305577086478489521">🚨</tg-emoji>\n\n'
             '<tg-emoji emoji-id="5305739801314501775">✅</tg-emoji> '
-            '<b>My options (ከሁሉም Social Media ላይ video, photo እና audio ማውረድና መቀየር ይችላሉ!) :</b>\n\n'
-            '<tg-emoji emoji-id="5305290882742788410">🎵</tg-emoji> | <b>Tiktok & Likee: videos & photos</b>\n'
-            '<tg-emoji emoji-id="5305551797711053969">📸</tg-emoji> | <b>Pinterest & Instagram: reels, photos & stories</b>\n'
-            '<tg-emoji emoji-id="5305777524012262308">▶️</tg-emoji> | <b>YouTube: videos & music (Full & Shorts)</b>\n'
-            '<tg-emoji emoji-id="5305474827602140530">✖️</tg-emoji> | <b>Twitter (X): videos & voice</b>\n'
-            '<tg-emoji emoji-id="5305311717629142471">📘</tg-emoji> | <b>Facebook, Reddit, Twitch, Vimeo & Others</b>\n'
-            '<tg-emoji emoji-id="5305289658677108341">📹</tg-emoji> <b>Video to Audio Converter: ቪዲዮ ወደ ኦዲዮ መቀየር ይችላሉ! </b>\n\n'
-            '<b>And others Social Media | ሌሎችንም ሶሻል ሚድያ ማውረድ ይችላሉ!:</b> '
-            '<tg-emoji emoji-id="5305466057278923962">📥</tg-emoji>'
+            '<b>My options:</b>\n\n'
+            '🎵 | <b>Tiktok & Likee: videos & photos</b>\n'
+            '📸 | <b>Pinterest & Instagram: reels, photos & stories</b>\n'
+            '▶️ | <b>YouTube: videos & music (Full & Shorts)</b>\n'
+            '✖️ | <b>Twitter (X): videos & voice</b>\n'
+            '📘 | <b>Facebook, Reddit, Twitch, Vimeo & Others</b>\n'
+            '📹 <b>Video to Audio Converter</b>'
         ),
         "price": '💰 12 Hours: በስምምነት | 24 Hours: 500 ETB | 48 Hours: 700 ETB',
         "order": '📢 @mame_posts ቻናል ላይ ማስታወቂያ ለማሰራት',
@@ -183,6 +182,7 @@ TRANSLATIONS = {
         "loading": '<tg-emoji emoji-id="5305254783542667121">⏳</tg-emoji> <b>Loading|Please wait...</b>',
         "video_converted": '<tg-emoji emoji-id="5305534793935527938">🎵</tg-emoji> <b>Extracted Audio</b>\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Converted with</b> @{bot_username} & @mame_posts',
         "video_downloaded": '<tg-emoji emoji-id="530762354187772738">🚀</tg-emoji> <b>Downloaded with</b> @{bot_username} & @mame_posts\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Enjoy!</b>',
+        "size_limit": "⚠️ <b>File exceeds Telegram 50MB limit!</b>",
         "fail_download": "💔 <b>Could not download the file! Please check if link is public.</b>",
         "photo_download": '📸 <b>Downloaded Thumbnail/Photo</b>\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Downloaded with</b> @{bot_username}',
         "welcome": 'Hello 🚨\n\n<b>Download video, photo, and audio from all Social Media!</b>',
@@ -203,7 +203,8 @@ TRANSLATIONS = {
         "done_msg": "✅ <b>تم! تم تعيين لغتك.</b>",
         "loading": '<tg-emoji emoji-id="5305254783542667121">⏳</tg-emoji> <b>جاري التحميل...</b>',
         "video_converted": '<tg-emoji emoji-id="5305534793935527938">🎵</tg-emoji> <b>الصوت المستخرج</b>\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>تم التحويل بواسطة</b> @{bot_username}',
-        "video_downloaded": '<tg-emoji emoji-id="530762354187772738">🚀</tg-emoji> <b>تم التحميل بواسطة</b> @{bot_username}',
+        "video_downloaded": '<tg-emoji emoji-id="530762354187772738">🚀</tg-emoji> <b>Downloaded with</b> @{bot_username}',
+        "size_limit": "⚠️ <b>حجم الملف أكبر من 50 ميغابايت!</b>",
         "fail_download": "💔 <b>تعذر تحميل الملف!</b>",
         "photo_download": '📸 <b>الصورة المصغرة المحملة</b>',
         "welcome": 'مرحباً بك! قم بتحميل مقاطع الفيديو والموسيقى بسهولة.',
@@ -521,7 +522,7 @@ def clean_url(raw_url: str) -> str:
     return url
 
 # ============================================================
-# UNLIMITED SIZE DOWNLOAD ENGINE (EXACT TESTED WORKING PARAMS)
+# OPTIMAL 48MB TARGETED DOWNLOAD ENGINE (STAYS UNDER TELEGRAM LIMIT)
 # ============================================================
 
 def get_ytdlp_options(output_template: str):
@@ -534,8 +535,16 @@ def get_ytdlp_options(output_template: str):
         'outtmpl': output_template,
         'writethumbnail': True,
         
-        # UNLIMITED QUALITY - EXACT PARAMS YOU TESTED
-        'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best',
+        # SMART TELEGRAM COMPATIBLE FORMAT:
+        # Tries best video under 45M + audio under 5M, or best overall under 48M, or standard 720p/480p/360p fallback
+        'format': (
+            'bestvideo[filesize<42M]+bestaudio[filesize<6M]/'
+            'best[filesize<48M]/'
+            'bestvideo[height<=720][filesize<45M]+bestaudio/'
+            'best[height<=720][filesize<48M]/'
+            'best[height<=480]/'
+            'best'
+        ),
         'merge_output_format': 'mp4',
         
         # EXACT VERIFIED DENO SETTINGS:
@@ -557,7 +566,7 @@ def find_downloaded_file(prefix: str):
     thumb_file = None
     for f in os.listdir('.'):
         if f.startswith(prefix) and not f.endswith(('.part', '.ytdl', '.temp')):
-            # Ignore intermediate unmerged streams like .f399.mp4 / .f140.m4a
+            # Ignore intermediate unmerged parts
             if re.search(r'\.f\d+\.', f):
                 continue
             ext = os.path.splitext(f)[1].lower()
@@ -629,18 +638,40 @@ async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE
             except Exception as te:
                 print("Thumbnail send failed:", te)
 
-        # 2. SEND VIDEO (ANY SIZE - DIRECT BUFFER)
+        # 2. COMPRESS IF OVER 49MB TO PREVENT "Request Entity Too Large"
         if actual_video and os.path.exists(actual_video):
             file_size = os.path.getsize(actual_video)
-            print(f"✅ Downloaded file ready: {actual_video} ({file_size / (1024*1024):.2f} MB)")
-            
+            video_to_send = actual_video
+
+            # If downloaded file is greater than 49 MB, compress it to 45 MB with FFmpeg
+            if file_size > 49 * 1024 * 1024:
+                print(f"⚠️ File is {file_size/(1024*1024):.2f}MB, compressing to under 48MB for Telegram...")
+                compressed_video = f"{prefix}_compressed.mp4"
+                compress_cmd = [
+                    ffmpeg_bin, "-y",
+                    "-i", actual_video,
+                    "-vf", "scale=-2:480",
+                    "-c:v", "libx264",
+                    "-crf", "28",
+                    "-preset", "faster",
+                    "-c:a", "aac",
+                    "-b:a", "96k",
+                    "-movflags", "+faststart",
+                    compressed_video
+                ]
+                await asyncio.to_thread(subprocess.run, compress_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                if os.path.exists(compressed_video) and os.path.getsize(compressed_video) > 1000:
+                    video_to_send = compressed_video
+                    file_size = os.path.getsize(video_to_send)
+
+            print(f"✅ Sending file: {video_to_send} ({file_size / (1024*1024):.2f} MB)")
             caption_text = f'<tg-emoji emoji-id="530762354187772738">🚀</tg-emoji> <b>Downloaded with</b> @{bot_username} & @mame_posts\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Enjoy!</b>'
             
+            # Send as video
             video_sent = False
-            # Try sending as video
             try:
                 await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_VIDEO)
-                with open(actual_video, 'rb') as vf:
+                with open(video_to_send, 'rb') as vf:
                     await update.message.reply_video(
                         video=vf,
                         caption=caption_text,
@@ -650,13 +681,13 @@ async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE
                 video_sent = True
                 sent_any = True
             except Exception as vid_err:
-                print("reply_video error, falling back to document:", vid_err)
+                print("reply_video error:", vid_err)
 
-            # If reply_video fails or file is large, send as document
+            # Fallback to document
             if not video_sent:
                 try:
                     await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_DOCUMENT)
-                    with open(actual_video, 'rb') as doc_file:
+                    with open(video_to_send, 'rb') as doc_file:
                         await update.message.reply_document(
                             document=doc_file,
                             caption=caption_text,
@@ -858,14 +889,13 @@ def main():
 
     keep_alive()
 
-    # Network timeouts extended to 600s (10 minutes) for large/unlimited video uploads
     application = (
         ApplicationBuilder()
         .token(TOKEN)
         .post_init(post_init)
         .connect_timeout(60.0)
-        .read_timeout(600.0)
-        .write_timeout(600.0)
+        .read_timeout(300.0)
+        .write_timeout(300.0)
         .build()
     )
 
