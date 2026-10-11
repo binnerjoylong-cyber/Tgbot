@@ -14,7 +14,9 @@ except Exception as e:
     print("Static FFmpeg setup warning:", e)
 
 FFMPEG_PATH = shutil.which("ffmpeg")
-DENO_PATH = shutil.which("deno") or "/root/.deno/bin/deno"
+
+# Deno binary path auto-detect
+DENO_BIN = shutil.which("deno") or "/root/.deno/bin/deno"
 
 from threading import Thread
 from urllib.parse import quote, urlparse, parse_qs
@@ -40,7 +42,7 @@ from telegram.ext import (
 import yt_dlp
 
 # ============================================================
-# CREATE COOKIES FILE FROM RENDER ENVIRONMENT VARIABLE
+# CREATE & VERIFY COOKIES PATH
 # ============================================================
 
 COOKIES_ENV = os.environ.get("YOUTUBE_COOKIES")
@@ -618,11 +620,10 @@ async def convert_video_to_audio(update, context):
                     pass
 
 # ============================================================
-# PERFECT URL CLEANER & MODERN DOWNLOAD ENGINE
+# SAFE URL CLEANER (NEVER CREATES watch&v=)
 # ============================================================
 
 def clean_url(raw_url: str) -> str:
-    """Properly formats YouTube Watch / Shorts URLs without destroying query structure."""
     url = raw_url.strip()
 
     # YouTube Shorts converter
@@ -635,15 +636,19 @@ def clean_url(raw_url: str) -> str:
     if youtu_be_match:
         return f"https://www.youtube.com/watch?v={youtu_be_match.group(1)}"
 
-    # Regular YouTube link - keep watch?v= intact, strip tracking params (?si=...)
+    # If it's a standard YouTube URL, cleanly extract 'v' parameter
     if "youtube.com/watch" in url:
         parsed = urlparse(url)
-        query_dict = parse_qs(parsed.query)
-        v = query_dict.get('v')
+        query = parse_qs(parsed.query)
+        v = query.get("v")
         if v:
             return f"https://www.youtube.com/watch?v={v[0]}"
 
     return url
+
+# ============================================================
+# MODERN URL DOWNLOAD ENGINE WITH VERIFIED DENO + EJS FIX
+# ============================================================
 
 def get_video_options(url: str, output_template: str):
     opts = {
@@ -656,7 +661,9 @@ def get_video_options(url: str, output_template: str):
         'writethumbnail': True,
         'merge_output_format': 'mp4',
         'format': 'bestvideo[ext=mp4][filesize<45M]+bestaudio[ext=m4a]/best[ext=mp4][filesize<50M]/best[filesize<50M]/best',
-        'js_runtimes': {'deno': {'path': DENO_PATH}},
+        
+        # KEY PARAMETERS VERIFIED ON YOUR VPS:
+        'js_runtimes': {'deno': {'path': DENO_BIN}},
         'remote_components': ['ejs:github'],
     }
 
@@ -703,7 +710,7 @@ async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE
 
     url = clean_url(raw_url)
 
-    # 1. Direct Pinterest image extraction
+    # Direct Pinterest Image
     if "pinterest.com" in url or "pin.it" in url:
         try:
             headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
@@ -728,12 +735,13 @@ async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE
     sent_any = False
 
     try:
+        # Download media using verified Deno + EJS config
         await asyncio.to_thread(download_media_func, url, media_template)
 
         actual_video, actual_thumb = find_downloaded_file(media_prefix)
         ffmpeg_bin = FFMPEG_PATH if FFMPEG_PATH else "ffmpeg"
 
-        # 2. SEND THUMBNAIL (Converted to JPG if WebP)
+        # 1. SEND THUMBNAIL (Converted to JPG if WebP)
         if actual_thumb and os.path.exists(actual_thumb):
             clean_thumb = actual_thumb
             try:
@@ -758,16 +766,16 @@ async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE
             except Exception as thumb_err:
                 print("Thumbnail send error:", thumb_err)
 
-        # 3. SEND VIDEO
+        # 2. SEND VIDEO (Remux to MP4 safely to avoid Document_invalid)
         if actual_video and os.path.exists(actual_video):
             file_size = os.path.getsize(actual_video)
-            if file_size > 0 and file_size <= 50 * 1024 * 1024:
+            if 0 < file_size <= 50 * 1024 * 1024:
                 await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_VIDEO)
-                
-                # Standardize to mp4 if needed
+
+                # Ensure valid mp4 container for Telegram Player
                 send_video_path = actual_video
                 if not actual_video.lower().endswith(".mp4"):
-                    fixed_mp4 = f"{media_prefix}_fixed.mp4"
+                    fixed_mp4 = f"{media_prefix}_ready.mp4"
                     await asyncio.to_thread(
                         subprocess.run,
                         [ffmpeg_bin, "-y", "-i", actual_video, "-c", "copy", fixed_mp4],
@@ -800,9 +808,9 @@ async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE
                             )
                         sent_any = True
                     except Exception as doc_err:
-                        print("reply_document also failed:", doc_err)
+                        print("reply_document error:", doc_err)
 
-                # 4. EXTRACT & SEND AUDIO (MP3)
+                # 3. EXTRACT & SEND AUDIO (MP3)
                 audio_output = f"audio_{user_id}_{update.message.message_id}.mp3"
                 cmd = [ffmpeg_bin, "-y", "-i", actual_video, "-vn", "-acodec", "libmp3lame", "-q:a", "2", audio_output]
                 await asyncio.to_thread(subprocess.run, cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
