@@ -273,7 +273,7 @@ TRANSLATIONS = {
             '<tg-emoji emoji-id="5305739801314501775">✅</tg-emoji> '
             '<b>خياراتي (يمكنك تحميل وتعديل الفيديوهات والصور والصوتيات من جميع منصات التواصل الاجتماعي):</b>\n\n'
             '<tg-emoji emoji-id="5305290882742788410">🎵</tg-emoji> | <b>Tiktok & Likee: مقاطع وصور</b>\n'
-            '<tg-emoji emoji-id="5305551797711053969">📸</tg-emoji> | <b>Pinterest & Instagram: ريلズ، صور وستوري</b>\n'
+            '<tg-emoji emoji-id="5305551797711053969">📸</tg-emoji> | <b>Pinterest & Instagram: ريلز، صور وستوري</b>\n'
             '<tg-emoji emoji-id="5305777524012262308">▶️</tg-emoji> | <b>YouTube: فيديوهات وموسيقى (كامل وShorts)</b>\n'
             '<tg-emoji emoji-id="5305474827602140530">✖️</tg-emoji> | <b>Twitter (X): فيديوهات وتغريدات صوتية</b>\n'
             '<tg-emoji emoji-id="5305311717629142471">📘</tg-emoji> | <b>Facebook, Reddit, Twitch, Vimeo وغيرها</b>\n'
@@ -303,7 +303,7 @@ TRANSLATIONS = {
         "support": (
             '<tg-emoji emoji-id="5305545479814161889">💬</tg-emoji> <b>الدعم والمساعدة في التحميل</b>\n\n'
             '<tg-emoji emoji-id="5305655375142364109">📺</tg-emoji> '
-            '<b>لتحميل الفيديوهات/الصور:</b> أرسل روابط تيك توك، إنستغرام، فيسبوك، ريديت، تويتش وغيرها مباشرة.\n\n'
+            '<b>لتحميل الفيديوهات/الصور:</b> أرسل روابط تيك توክ، إنستغرام، فيسبوك، ريديت، تويتش وغيرها مباشرة.\n\n'
             '<tg-emoji emoji-id="5305289658677108341">📹</tg-emoji> <b>تحويل الفيديو إلى صوت:</b> أرسل أي فيديو لتحويله إلى ملف صوتي MP3.\n\n'
             '<tg-emoji emoji-id="5949327894567195412">👩‍💻</tg-emoji> يمكنك كتابة رسائلك هنا للتواصل مع المسؤول مباشرة.'
         )
@@ -692,6 +692,29 @@ def find_downloaded_file(prefix: str):
                 video_file = f
     return video_file, thumb_file
 
+def get_video_metadata(video_path: str, ffmpeg_bin: str):
+    """Safely extracts width, height and duration using ffprobe for Telegram Player."""
+    try:
+        ffprobe_bin = shutil.which("ffprobe")
+        if not ffprobe_bin:
+            return None, None, None
+        cmd = [
+            ffprobe_bin,
+            "-v", "error",
+            "-show_entries", "stream=width,height:format=duration",
+            "-of", "json",
+            video_path
+        ]
+        res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, timeout=10)
+        data = json.loads(res.stdout)
+        streams = data.get("streams", [])
+        w = streams[0].get("width") if streams else None
+        h = streams[0].get("height") if streams else None
+        dur = int(float(data.get("format", {}).get("duration", 0)))
+        return w, h, dur
+    except Exception:
+        return None, None, None
+
 async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE, raw_url: str):
     chat_id = update.effective_chat.id
     user_id = update.effective_user.id
@@ -734,27 +757,28 @@ async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE
     sent_any = False
 
     try:
-        # Download media
+        # Download media using verified Deno + EJS config
         await asyncio.to_thread(download_media_func, url, media_template)
 
         actual_video, actual_thumb = find_downloaded_file(media_prefix)
         ffmpeg_bin = FFMPEG_PATH if FFMPEG_PATH else "ffmpeg"
 
         # 2. SEND THUMBNAIL (Converted to JPG if WebP)
+        clean_thumb_path = None
         if actual_thumb and os.path.exists(actual_thumb):
-            clean_thumb = actual_thumb
+            clean_thumb_path = actual_thumb
             try:
                 if actual_thumb.lower().endswith(".webp"):
-                    clean_thumb = f"{media_prefix}_thumb.jpg"
+                    clean_thumb_path = f"{media_prefix}_thumb.jpg"
                     await asyncio.to_thread(
                         subprocess.run,
-                        [ffmpeg_bin, "-y", "-i", actual_thumb, clean_thumb],
+                        [ffmpeg_bin, "-y", "-i", actual_thumb, clean_thumb_path],
                         stdout=subprocess.DEVNULL,
                         stderr=subprocess.DEVNULL
                     )
 
-                if os.path.exists(clean_thumb) and os.path.getsize(clean_thumb) > 0:
-                    with open(clean_thumb, 'rb') as tf:
+                if os.path.exists(clean_thumb_path) and os.path.getsize(clean_thumb_path) > 0:
+                    with open(clean_thumb_path, 'rb') as tf:
                         await update.message.reply_photo(
                             photo=tf,
                             caption=get_trans(user_id, "photo_download").format(bot_username=bot_username),
@@ -771,41 +795,52 @@ async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE
             if file_size > 1000 and file_size <= 50 * 1024 * 1024:
                 await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_VIDEO)
 
-                # Direct remux to standard mp4 container with faststart (fixes Telegram desktop/mobile playback)
-                final_video_file = f"{media_prefix}_telegram.mp4"
+                # Re-mux cleanly to ensure proper moov atom and video streaming support
+                ready_video_path = f"{media_prefix}_clean.mp4"
                 remux_cmd = [
                     ffmpeg_bin, "-y",
                     "-i", actual_video,
                     "-c:v", "copy",
-                    "-c:a", "copy",
+                    "-c:a", "aac",
                     "-movflags", "+faststart",
-                    final_video_file
+                    ready_video_path
                 ]
                 await asyncio.to_thread(subprocess.run, remux_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-                video_to_upload = final_video_file if (os.path.exists(final_video_file) and os.path.getsize(final_video_file) > 1000) else actual_video
+                target_file = ready_video_path if (os.path.exists(ready_video_path) and os.path.getsize(ready_video_path) > 1000) else actual_video
+                v_width, v_height, v_dur = get_video_metadata(target_file, ffmpeg_bin)
 
-                video_sent_successfully = False
+                video_kwargs = {
+                    "caption": f'<tg-emoji emoji-id="530762354187772738">🚀</tg-emoji> <b>Downloaded with</b> @{bot_username} & @mame_posts\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Enjoy!</b>',
+                    "reply_markup": reply_markup_share,
+                    "parse_mode": "HTML",
+                    "supports_streaming": True
+                }
+                if v_width and v_height:
+                    video_kwargs["width"] = v_width
+                    video_kwargs["height"] = v_height
+                if v_dur:
+                    video_kwargs["duration"] = v_dur
+
+                video_sent = False
                 try:
-                    with open(video_to_upload, 'rb') as vf:
+                    with open(target_file, 'rb') as vf:
                         await update.message.reply_video(
                             video=vf,
-                            caption=f'<tg-emoji emoji-id="530762354187772738">🚀</tg-emoji> <b>Downloaded with</b> @{bot_username} & @mame_posts\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Enjoy!</b>',
-                            reply_markup=reply_markup_share,
-                            parse_mode="HTML",
-                            supports_streaming=True
+                            filename=f"video_{update.message.message_id}.mp4",
+                            **video_kwargs
                         )
-                    video_sent_successfully = True
+                    video_sent = True
                     sent_any = True
                 except Exception as vid_err:
-                    print("reply_video error:", vid_err)
+                    print("reply_video direct upload failed:", vid_err)
 
-                # Fallback to Document ONLY if reply_video failed
-                if not video_sent_successfully:
+                # Safe fallback to Document (with explicit filename & binary reading)
+                if not video_sent:
                     try:
-                        with open(video_to_upload, 'rb') as doc_file:
+                        with open(target_file, 'rb') as doc_f:
                             await update.message.reply_document(
-                                document=doc_file,
+                                document=doc_f,
                                 filename=f"video_{update.message.message_id}.mp4",
                                 caption=f'<tg-emoji emoji-id="530762354187772738">🚀</tg-emoji> <b>Downloaded with</b> @{bot_username} & @mame_posts',
                                 reply_markup=reply_markup_share,
@@ -813,7 +848,7 @@ async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE
                             )
                         sent_any = True
                     except Exception as doc_err:
-                        print("Document fallback failed:", doc_err)
+                        print("Document safe fallback error:", doc_err)
 
                 # 4. EXTRACT & SEND AUDIO (MP3)
                 audio_output = f"audio_{user_id}_{update.message.message_id}.mp3"
@@ -825,6 +860,7 @@ async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE
                     with open(audio_output, 'rb') as af:
                         await update.message.reply_audio(
                             audio=af,
+                            filename=f"audio_{update.message.message_id}.mp3",
                             caption=f'<tg-emoji emoji-id="5307705891313721642">🎧</tg-emoji> <b>Extracted Audio / BGM (MP3)</b>\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Downloaded with</b> @{bot_username}',
                             reply_markup=reply_markup_share,
                             parse_mode="HTML"
