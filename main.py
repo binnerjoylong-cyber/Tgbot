@@ -619,7 +619,7 @@ async def convert_video_to_audio(update, context):
                     pass
 
 # ============================================================
-# SAFE URL CLEANER (NEVER DESTROYS YOUTUBE LINKS)
+# SAFE URL CLEANER (NEVER DESTROYS YOUTUBE QUERY)
 # ============================================================
 
 def clean_url(raw_url: str) -> str:
@@ -635,7 +635,7 @@ def clean_url(raw_url: str) -> str:
     if youtu_be_match:
         return f"https://www.youtube.com/watch?v={youtu_be_match.group(1)}"
 
-    # YouTube Watch URL: safely get video ID without messing up '?v='
+    # Standard YouTube watch URL: preserve ?v= perfectly
     if "youtube.com/watch" in url:
         parsed = urlparse(url)
         query = parse_qs(parsed.query)
@@ -646,22 +646,24 @@ def clean_url(raw_url: str) -> str:
     return url
 
 # ============================================================
-# MODERN URL DOWNLOAD ENGINE WITH DENO & EJS GITHUB FIX
+# MODERN URL DOWNLOAD ENGINE WITH FAIL-SAFE FORMAT SELECTION
 # ============================================================
 
 def get_ytdlp_options(output_template: str):
     opts = {
-        'quiet': True,
-        'no_warnings': True,
+        'quiet': False,       # Print errors to terminal if any
+        'no_warnings': False,
         'nocheckcertificate': True,
         'geo_bypass': True,
         'concurrent_fragment_downloads': 5,
         'outtmpl': output_template,
         'writethumbnail': True,
-        'merge_output_format': 'mp4',
-        'format': 'bestvideo[ext=mp4][filesize<45M]+bestaudio[ext=m4a]/best[ext=mp4][filesize<50M]/best[filesize<50M]/best',
         
-        # KEY PARAMETERS VERIFIED WORKING ON YOUR VPS:
+        # Download best combined mp4 or single progressive stream
+        'format': 'b[ext=mp4]/best[ext=mp4]/bestvideo[ext=mp4]+bestaudio[ext=m4a]/best',
+        'merge_output_format': 'mp4',
+        
+        # EXACT VERIFIED DENO SETTINGS:
         'js_runtimes': {'deno': {'path': DENO_BIN}},
         'remote_components': ['ejs:github'],
     }
@@ -676,6 +678,7 @@ def download_media(url: str, output_template: str):
         ydl.download([url])
 
 def find_downloaded_file(prefix: str):
+    """Finds downloaded video and thumb, ensuring video is actually non-empty!"""
     video_file = None
     thumb_file = None
     for f in os.listdir('.'):
@@ -684,7 +687,9 @@ def find_downloaded_file(prefix: str):
             if ext in ['.jpg', '.jpeg', '.png', '.webp']:
                 thumb_file = f
             elif ext in ['.mp4', '.mkv', '.webm', '.mov', '.avi']:
-                video_file = f
+                # Ensure the video is actually greater than 50 KB (not empty!)
+                if os.path.getsize(f) > 50 * 1024:
+                    video_file = f
     return video_file, thumb_file
 
 async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE, raw_url: str):
@@ -699,7 +704,7 @@ async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE
     prefix = f"media_{user_id}_{update.message.message_id}"
     template = f"{prefix}.%(ext)s"
 
-    # Direct Pinterest Image bypass
+    # 1. Direct Pinterest Image bypass
     if "pinterest.com" in target_url or "pin.it" in target_url:
         try:
             res = requests.get(target_url, headers={'User-Agent': 'Mozilla/5.0'}, timeout=10)
@@ -724,7 +729,7 @@ async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE
         actual_video, actual_thumb = find_downloaded_file(prefix)
         ffmpeg_bin = FFMPEG_PATH or "ffmpeg"
 
-        # 1. SEND THUMBNAIL (Converted to JPG if WebP)
+        # 2. SEND THUMBNAIL (Converted to JPG if WebP)
         if actual_thumb and os.path.exists(actual_thumb):
             clean_thumb = actual_thumb
             try:
@@ -737,7 +742,7 @@ async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE
                         stderr=subprocess.DEVNULL
                     )
 
-                if os.path.exists(clean_thumb) and os.path.getsize(clean_thumb) > 0:
+                if os.path.exists(clean_thumb) and os.path.getsize(clean_thumb) > 1000:
                     with open(clean_thumb, 'rb') as tf:
                         await update.message.reply_photo(
                             photo=tf,
@@ -748,9 +753,11 @@ async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE
             except Exception as te:
                 print("Thumbnail send failed:", te)
 
-        # 2. SEND VIDEO (EXACT SOURCE LOGIC - NO EXTRA REMUX / NO FILENAME OVERRIDE)
+        # 3. SEND VIDEO (GUARANTEED VALID NON-EMPTY FILE)
         if actual_video and os.path.exists(actual_video):
             file_size = os.path.getsize(actual_video)
+            print(f"✅ Video Downloaded Successfully: {actual_video} ({file_size / (1024*1024):.2f} MB)")
+            
             if 0 < file_size <= 50 * 1024 * 1024:
                 await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_VIDEO)
                 caption_text = f'<tg-emoji emoji-id="530762354187772738">🚀</tg-emoji> <b>Downloaded with</b> @{bot_username} & @mame_posts\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Enjoy!</b>'
@@ -765,24 +772,24 @@ async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE
                         )
                     sent_any = True
                 except Exception as vid_err:
-                    print("reply_video failed, document fallback:", vid_err)
+                    print("reply_video failed, trying document fallback:", vid_err)
                     try:
                         with open(actual_video, 'rb') as doc_file:
                             await update.message.reply_document(
                                 document=doc_file,
-                                caption=f'<tg-emoji emoji-id="530762354187772738">🚀</tg-emoji> <b>Downloaded with</b> @{bot_username} & @mame_posts',
+                                caption=caption_text,
                                 parse_mode="HTML"
                             )
                         sent_any = True
                     except Exception as doc_err:
-                        print("document fallback failed:", doc_err)
+                        print("Document fallback failed:", doc_err)
 
-                # 3. EXTRACT & SEND AUDIO (MP3)
+                # 4. EXTRACT & SEND AUDIO (MP3)
                 audio_output = f"audio_{user_id}_{update.message.message_id}.mp3"
                 cmd = [ffmpeg_bin, "-y", "-i", actual_video, "-vn", "-acodec", "libmp3lame", "-q:a", "2", audio_output]
                 await asyncio.to_thread(subprocess.run, cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-                if os.path.exists(audio_output) and os.path.getsize(audio_output) > 0:
+                if os.path.exists(audio_output) and os.path.getsize(audio_output) > 1000:
                     await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.RECORD_VOICE)
                     with open(audio_output, 'rb') as af:
                         await update.message.reply_audio(
@@ -794,6 +801,8 @@ async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE
             else:
                 await status_msg.edit_text(get_trans(user_id, "size_limit"), parse_mode="HTML")
                 return
+        else:
+            print("❌ No valid video file found on disk! File might be 0 bytes or download failed.")
 
     except Exception as e:
         print("Download engine error:", e)
@@ -828,8 +837,7 @@ async def button_callback(update, context):
     bot_username = get_bot_username(context)
 
     if data.startswith("lang_"):
-        lang_code = data.split("_", 1)[1]
-        set_user_language(user_id, lang_code)
+        set_user_language(user_id, data.split("_", 1)[1])
         await query.answer()
         try:
             await query.message.delete()
