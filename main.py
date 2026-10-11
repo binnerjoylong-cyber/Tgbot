@@ -133,7 +133,7 @@ def get_user_stats(user_id):
     return total_users, user_msg_count
 
 # ============================================================
-# TRANSLATIONS (AMHARIC, ENGLISH & ARABIC)
+# TRANSLATIONS
 # ============================================================
 
 TRANSLATIONS = {
@@ -147,27 +147,17 @@ TRANSLATIONS = {
         "btn_support": "Support | ድጋፍ",
         "btn_back": "Back to Menu",
         "done_msg": "✅ <b>ተጠናቋል! ቋንቋዎ ተስተካክሏል።</b>",
-        "loading": '<tg-emoji emoji-id="5305254783542667121">⏳</tg-emoji> <b>Loading|ይጠብቁ...</b>',
-        "video_converted": '<tg-emoji emoji-id="5305534793935527938">🎵</tg-emoji> <b>ከቪዲዮ የተቀየረው (Extracted Audio)</b>\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Converted with</b> @{bot_username} & @mame_posts',
-        "video_downloaded": '<tg-emoji emoji-id="530762354187772738">🚀</tg-emoji> <b>Downloaded with</b> @{bot_username} & @mame_posts\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Enjoy!</b>',
+        "loading": "⏳ <b>Loading|ይጠብቁ...</b>",
+        "video_converted": "🎵 <b>ከቪዲዮ የተቀየረው (Extracted Audio)</b>\n\n✅ <b>Converted with</b> @{bot_username} &amp; @mame_posts",
+        "video_downloaded": "🚀 <b>Downloaded with</b> @{bot_username} &amp; @mame_posts\n\n✅ <b>Enjoy!</b>",
         "size_limit": "⚠️ <b>ቪዲዮው ከ 50MB በላይ ስለሆነ በቴሌግራም መላክ አይቻልም!</b>",
         "fail_download": "💔 <b> የፈለጉትን File ማግኘት አልቻልኩም!</b>\n\nእባክዎ የላኩት ሊንክ private አለመሆኑን አረጋግጠው እንደገና ይሞክሩ።",
-        "photo_download": '📸 <b>Downloaded Thumbnail/Photo</b>\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Downloaded with</b> @{bot_username}',
-        "welcome": (
-            'Hello <tg-emoji emoji-id="5305577086478489521">🚨</tg-emoji>\n\n'
-            '<tg-emoji emoji-id="5305739801314501775">✅</tg-emoji> '
-            '<b>My options:</b>\n\n'
-            '🎵 | <b>Tiktok & Likee: videos & photos</b>\n'
-            '📸 | <b>Pinterest & Instagram: reels, photos & stories</b>\n'
-            '▶️ | <b>YouTube: videos & music (Full & Shorts)</b>\n'
-            '✖️ | <b>Twitter (X): videos & voice</b>\n'
-            '📘 | <b>Facebook, Reddit, Twitch, Vimeo & Others</b>\n'
-            '📹 <b>Video to Audio Converter</b>'
-        ),
-        "price": '💰 12 Hours: በስምምነት | 24 Hours: 500 ETB | 48 Hours: 700 ETB',
-        "order": '📢 @mame_posts ቻናል ላይ ማስታወቂያ ለማሰራት',
-        "payment": '💳 CBE: <code>1000528274394</code> | Telebirr: <code>+251963266849</code>',
-        "support": '💬 Support and Help'
+        "photo_download": "📸 <b>Downloaded Thumbnail/Photo</b>\n\n✅ <b>Downloaded with</b> @{bot_username}",
+        "welcome": "Hello 🚨\n\n<b>ከሁሉም Social Media ቪዲዮ ማውረድ ይችላሉ!</b>",
+        "price": "💰 12 Hours: በስምምነት | 24 Hours: 500 ETB | 48 Hours: 700 ETB",
+        "order": "📢 @mame_posts ቻናል ላይ ማስታወቂያ ለማሰራት",
+        "payment": "💳 CBE: <code>1000528274394</code> | Telebirr: <code>+251963266849</code>",
+        "support": "💬 Support and Help"
     },
     "en": {
         "btn_add": "Add a bot to the chat",
@@ -179,17 +169,17 @@ TRANSLATIONS = {
         "btn_support": "Support & Help",
         "btn_back": "Back to Menu",
         "done_msg": "✅ <b>Done! Your language has been set.</b>",
-        "loading": '<tg-emoji emoji-id="5305254783542667121">⏳</tg-emoji> <b>Loading|Please wait...</b>',
-        "video_converted": '<tg-emoji emoji-id="5305534793935527938">🎵</tg-emoji> <b>Extracted Audio</b>\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Converted with</b> @{bot_username} & @mame_posts',
-        "video_downloaded": '<tg-emoji emoji-id="530762354187772738">🚀</tg-emoji> <b>Downloaded with</b> @{bot_username} & @mame_posts\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Enjoy!</b>',
+        "loading": "⏳ <b>Loading|Please wait...</b>",
+        "video_converted": "🎵 <b>Extracted Audio</b>\n\n✅ <b>Converted with</b> @{bot_username} &amp; @mame_posts",
+        "video_downloaded": "🚀 <b>Downloaded with</b> @{bot_username} &amp; @mame_posts\n\n✅ <b>Enjoy!</b>",
         "size_limit": "⚠️ <b>File exceeds Telegram 50MB limit!</b>",
         "fail_download": "💔 <b>Could not download the file! Please check if link is public.</b>",
-        "photo_download": '📸 <b>Downloaded Thumbnail/Photo</b>\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Downloaded with</b> @{bot_username}',
-        "welcome": 'Hello 🚨\n\n<b>Download video, photo, and audio from all Social Media!</b>',
-        "price": '💰 24 Hours — 500 ETB | 48 Hours — 700 ETB',
-        "order": '📢 To Advertise on @mame_posts Channel',
-        "payment": '💳 CBE: <code>1000528274394</code> | Telebirr: <code>+251963266849</code>',
-        "support": '💬 Support and Help'
+        "photo_download": "📸 <b>Downloaded Thumbnail/Photo</b>\n\n✅ <b>Downloaded with</b> @{bot_username}",
+        "welcome": "Hello 🚨\n\n<b>Download video, photo, and audio from all Social Media!</b>",
+        "price": "💰 24 Hours — 500 ETB | 48 Hours — 700 ETB",
+        "order": "📢 To Advertise on @mame_posts Channel",
+        "payment": "💳 CBE: <code>1000528274394</code> | Telebirr: <code>+251963266849</code>",
+        "support": "💬 Support and Help"
     },
     "ar": {
         "btn_add": "إضافة البوت إلى المجموعة",
@@ -201,17 +191,17 @@ TRANSLATIONS = {
         "btn_support": "الدعم والتعليمات",
         "btn_back": "العودة للقائمة",
         "done_msg": "✅ <b>تم! تم تعيين لغتك.</b>",
-        "loading": '<tg-emoji emoji-id="5305254783542667121">⏳</tg-emoji> <b>جاري التحميل...</b>',
-        "video_converted": '<tg-emoji emoji-id="5305534793935527938">🎵</tg-emoji> <b>الصوت المستخرج</b>\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>تم التحويل بواسطة</b> @{bot_username}',
-        "video_downloaded": '<tg-emoji emoji-id="530762354187772738">🚀</tg-emoji> <b>Downloaded with</b> @{bot_username}',
+        "loading": "⏳ <b>جاري التحميل...</b>",
+        "video_converted": "🎵 <b>الصوت المستخرج</b>\n\n✅ <b>تم التحويل بواسطة</b> @{bot_username}",
+        "video_downloaded": "🚀 <b>تم التحميل بواسطة</b> @{bot_username}",
         "size_limit": "⚠️ <b>حجم الملف أكبر من 50 ميغابايت!</b>",
         "fail_download": "💔 <b>تعذر تحميل الملف!</b>",
-        "photo_download": '📸 <b>الصورة المصغرة المحملة</b>',
-        "welcome": 'مرحباً بك! قم بتحميل مقاطع الفيديو والموسيقى بسهولة.',
-        "price": '💰 24 ساعة: 500 ETB',
-        "order": '📢 للإعلان على @mame_posts',
-        "payment": '💳 CBE: <code>1000528274394</code>',
-        "support": '💬 الدعم والمساعدة'
+        "photo_download": "📸 <b>الصورة المصغرة المحملة</b>",
+        "welcome": "مرحباً بك! قم بتحميل مقاطع الفيديو والموسيقى بسهولة.",
+        "price": "💰 24 ساعة: 500 ETB",
+        "order": "📢 للإعلان على @mame_posts",
+        "payment": "💳 CBE: <code>1000528274394</code>",
+        "support": "💬 الدعم والمساعدة"
     }
 }
 
@@ -225,29 +215,19 @@ def get_trans(user_id, key):
 def get_bot_username(context):
     return context.bot.username or "mame_posts_bot"
 
-def get_main_menu_keyboard(bot_username, user_id, use_custom_emoji=True):
-    def btn(text, callback_data=None, url=None, emoji_id=None):
-        kwargs = {"text": text}
-        if callback_data:
-            kwargs["callback_data"] = callback_data
-        if url:
-            kwargs["url"] = url
-        if use_custom_emoji and emoji_id:
-            kwargs["icon_custom_emoji_id"] = emoji_id
-        return InlineKeyboardButton(**kwargs)
-
+def get_main_menu_keyboard(bot_username, user_id):
     keyboard = [
-        [btn(get_trans(user_id, "btn_add"), url=f"https://t.me/{bot_username}?startgroup=true", emoji_id="5305545479814161889")],
-        [btn(get_trans(user_id, "btn_order"), callback_data="cmd_order", emoji_id="5267442591548320083")],
+        [InlineKeyboardButton(get_trans(user_id, "btn_add"), url=f"https://t.me/{bot_username}?startgroup=true")],
+        [InlineKeyboardButton(get_trans(user_id, "btn_order"), callback_data="cmd_order")],
         [
-            btn(get_trans(user_id, "btn_price"), callback_data="cmd_price", emoji_id="5447458260200214425"),
-            btn(get_trans(user_id, "btn_payment"), callback_data="cmd_payment", emoji_id="5186349709169525403")
+            InlineKeyboardButton(get_trans(user_id, "btn_price"), callback_data="cmd_price"),
+            InlineKeyboardButton(get_trans(user_id, "btn_payment"), callback_data="cmd_payment")
         ],
         [
-            btn(get_trans(user_id, "btn_status"), callback_data="cmd_status", emoji_id="5431577498364158238"),
-            btn(get_trans(user_id, "btn_lang"), callback_data="cmd_change_lang", emoji_id="5431577498364158238")
+            InlineKeyboardButton(get_trans(user_id, "btn_status"), callback_data="cmd_status"),
+            InlineKeyboardButton(get_trans(user_id, "btn_lang"), callback_data="cmd_change_lang")
         ],
-        [btn(get_trans(user_id, "btn_support"), callback_data="cmd_support", emoji_id="5949327894567195412")]
+        [InlineKeyboardButton(get_trans(user_id, "btn_support"), callback_data="cmd_support")]
     ]
     return InlineKeyboardMarkup(keyboard)
 
@@ -261,11 +241,8 @@ def get_language_keyboard():
     ]
     return InlineKeyboardMarkup(keyboard)
 
-def get_back_keyboard(user_id, use_custom_emoji=True):
-    kwargs = {"text": get_trans(user_id, "btn_back"), "callback_data": "cmd_back"}
-    if use_custom_emoji:
-        kwargs["icon_custom_emoji_id"] = "5248948801674159296"
-    return InlineKeyboardMarkup([[InlineKeyboardButton(**kwargs)]])
+def get_back_keyboard(user_id):
+    return InlineKeyboardMarkup([[InlineKeyboardButton(get_trans(user_id, "btn_back"), callback_data="cmd_back")]])
 
 async def post_init(application):
     commands = [
@@ -304,32 +281,21 @@ async def show_force_join(update, context):
         btn_join_text = "Join Channel"
         btn_joined_text = "I've Joined"
 
-    keyboard_custom = [
-        [InlineKeyboardButton(text=btn_join_text, icon_custom_emoji_id="5767358836134382747", url=FORCE_CHANNEL_LINK)],
-        [InlineKeyboardButton(text=btn_joined_text, icon_custom_emoji_id="5895288332581082241", callback_data="check_join")]
+    keyboard = [
+        [InlineKeyboardButton(text=f"📢 {btn_join_text}", url=FORCE_CHANNEL_LINK)],
+        [InlineKeyboardButton(text=f"✅ {btn_joined_text}", callback_data="check_join")]
     ]
-    try:
-        await update.message.reply_text(text=text, reply_markup=InlineKeyboardMarkup(keyboard_custom), parse_mode="HTML")
-    except Exception:
-        await update.message.reply_text(text=text, reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(text=btn_join_text, url=FORCE_CHANNEL_LINK)]]), parse_mode="HTML")
+    await update.message.reply_text(text=text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="HTML")
 
 async def send_main_menu(chat_id, context, user_id):
     bot_username = get_bot_username(context)
     text = get_trans(user_id, "welcome")
-    try:
-        await context.bot.send_message(
-            chat_id=chat_id,
-            text=text,
-            reply_markup=get_main_menu_keyboard(bot_username, user_id, use_custom_emoji=True),
-            parse_mode="HTML"
-        )
-    except Exception:
-        await context.bot.send_message(
-            chat_id=chat_id,
-            text=text,
-            reply_markup=get_main_menu_keyboard(bot_username, user_id, use_custom_emoji=False),
-            parse_mode="HTML"
-        )
+    await context.bot.send_message(
+        chat_id=chat_id,
+        text=text,
+        reply_markup=get_main_menu_keyboard(bot_username, user_id),
+        parse_mode="HTML"
+    )
 
 # ============================================================
 # COMMAND HANDLERS
@@ -364,12 +330,12 @@ async def status_command(update, context):
     username_text = f"@{user.username}" if user.username else "የለውም"
 
     msg = (
-        '<tg-emoji emoji-id="5431577498364158238">📊</tg-emoji> <b>My Status & Stats</b>\n\n'
-        f'👤 <b>Username:</b> {username_text}\n'
-        f'🆔 <b>ID:</b> <code>{user.id}</code>\n\n'
-        f'💬 <b>Your Messages:</b> {user_msg_count}\n'
-        f'👥 <b>Bot Users:</b> {total_users}\n\n'
-        '🔥 <b>Engagement: Active</b>'
+        f"📊 <b>My Status &amp; Stats</b>\n\n"
+        f"👤 <b>Username:</b> {username_text}\n"
+        f"🆔 <b>ID:</b> <code>{user.id}</code>\n\n"
+        f"💬 <b>Your Messages:</b> {user_msg_count}\n"
+        f"👥 <b>Bot Users:</b> {total_users}\n\n"
+        f"🔥 <b>Engagement: Active</b>"
     )
     await update.message.reply_text(msg, parse_mode="HTML")
 
@@ -472,7 +438,7 @@ async def convert_video_to_audio(update, context):
         share_url = f"https://t.me/share/url?url={quote(f'https://t.me/{bot_username}?start=share')}&text={quote('Try this awesome Bot!🔥')}"
         keyboard_share = [[InlineKeyboardButton("🔗 Share Bot 🚀", url=share_url)]]
 
-        caption_text = get_trans(user_id, "video_converted").format(bot_username=bot_username)
+        caption_text = f"🎵 <b>Extracted Audio</b>\n\n✅ <b>Converted with</b> @{bot_username} &amp; @mame_posts"
 
         with open(output_path, "rb") as audio_file:
             await update.message.reply_audio(
@@ -522,7 +488,7 @@ def clean_url(raw_url: str) -> str:
     return url
 
 # ============================================================
-# OPTIMAL 48MB TARGETED DOWNLOAD ENGINE (STAYS UNDER TELEGRAM LIMIT)
+# OPTIMAL DOWNLOAD ENGINE (UNDER 50MB GUARANTEE)
 # ============================================================
 
 def get_ytdlp_options(output_template: str):
@@ -534,9 +500,6 @@ def get_ytdlp_options(output_template: str):
         'concurrent_fragment_downloads': 5,
         'outtmpl': output_template,
         'writethumbnail': True,
-        
-        # SMART TELEGRAM COMPATIBLE FORMAT:
-        # Tries best video under 45M + audio under 5M, or best overall under 48M, or standard 720p/480p/360p fallback
         'format': (
             'bestvideo[filesize<42M]+bestaudio[filesize<6M]/'
             'best[filesize<48M]/'
@@ -546,8 +509,6 @@ def get_ytdlp_options(output_template: str):
             'best'
         ),
         'merge_output_format': 'mp4',
-        
-        # EXACT VERIFIED DENO SETTINGS:
         'js_runtimes': {'deno': {'path': DENO_BIN}},
         'remote_components': ['ejs:github'],
     }
@@ -566,7 +527,6 @@ def find_downloaded_file(prefix: str):
     thumb_file = None
     for f in os.listdir('.'):
         if f.startswith(prefix) and not f.endswith(('.part', '.ytdl', '.temp')):
-            # Ignore intermediate unmerged parts
             if re.search(r'\.f\d+\.', f):
                 continue
             ext = os.path.splitext(f)[1].lower()
@@ -597,7 +557,7 @@ async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE
             if img_matches:
                 await update.message.reply_photo(
                     photo=img_matches[0],
-                    caption=get_trans(user_id, "photo_download").format(bot_username=bot_username),
+                    caption=f"📸 <b>Downloaded Photo</b>\n\n✅ @{bot_username}",
                     parse_mode="HTML"
                 )
                 await status_msg.delete()
@@ -608,7 +568,6 @@ async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE
     sent_any = False
 
     try:
-        # Download media using verified Deno + EJS config
         await asyncio.to_thread(download_media, target_url, template)
 
         actual_video, actual_thumb = find_downloaded_file(prefix)
@@ -631,22 +590,21 @@ async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE
                     with open(clean_thumb, 'rb') as tf:
                         await update.message.reply_photo(
                             photo=tf,
-                            caption=get_trans(user_id, "photo_download").format(bot_username=bot_username),
+                            caption=f"📸 <b>Downloaded Thumbnail</b>\n\n✅ @{bot_username}",
                             parse_mode="HTML"
                         )
                     sent_any = True
             except Exception as te:
                 print("Thumbnail send failed:", te)
 
-        # 2. COMPRESS IF OVER 49MB TO PREVENT "Request Entity Too Large"
+        # 2. COMPRESS IF OVER 49MB & SEND VIDEO
         if actual_video and os.path.exists(actual_video):
             file_size = os.path.getsize(actual_video)
             video_to_send = actual_video
 
-            # If downloaded file is greater than 49 MB, compress it to 45 MB with FFmpeg
+            # If over 49MB, compress to 40MB
             if file_size > 49 * 1024 * 1024:
-                print(f"⚠️ File is {file_size/(1024*1024):.2f}MB, compressing to under 48MB for Telegram...")
-                compressed_video = f"{prefix}_compressed.mp4"
+                compressed_video = f"{prefix}_comp.mp4"
                 compress_cmd = [
                     ffmpeg_bin, "-y",
                     "-i", actual_video,
@@ -665,16 +623,17 @@ async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE
                     file_size = os.path.getsize(video_to_send)
 
             print(f"✅ Sending file: {video_to_send} ({file_size / (1024*1024):.2f} MB)")
-            caption_text = f'<tg-emoji emoji-id="530762354187772738">🚀</tg-emoji> <b>Downloaded with</b> @{bot_username} & @mame_posts\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Enjoy!</b>'
             
-            # Send as video
+            # CLEAN HTML CAPTION (NO INVALID TAGS / NO UNESCAPED &)
+            clean_caption = f"🚀 <b>Downloaded with</b> @{bot_username} &amp; @mame_posts\n\n✅ <b>Enjoy!</b>"
+
             video_sent = False
             try:
                 await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_VIDEO)
                 with open(video_to_send, 'rb') as vf:
                     await update.message.reply_video(
                         video=vf,
-                        caption=caption_text,
+                        caption=clean_caption,
                         parse_mode="HTML",
                         supports_streaming=True
                     )
@@ -683,14 +642,14 @@ async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE
             except Exception as vid_err:
                 print("reply_video error:", vid_err)
 
-            # Fallback to document
+            # Clean Fallback to document
             if not video_sent:
                 try:
                     await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_DOCUMENT)
                     with open(video_to_send, 'rb') as doc_file:
                         await update.message.reply_document(
                             document=doc_file,
-                            caption=caption_text,
+                            caption=clean_caption,
                             parse_mode="HTML"
                         )
                     sent_any = True
@@ -707,7 +666,7 @@ async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE
                 with open(audio_output, 'rb') as af:
                     await update.message.reply_audio(
                         audio=af,
-                        caption=f'<tg-emoji emoji-id="5307705891313721642">🎧</tg-emoji> <b>Extracted Audio / BGM (MP3)</b>\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Downloaded with</b> @{bot_username}',
+                        caption=f"🎧 <b>Extracted Audio / BGM (MP3)</b>\n\n✅ <b>Downloaded with</b> @{bot_username}",
                         parse_mode="HTML"
                     )
                 sent_any = True
@@ -798,12 +757,12 @@ async def button_callback(update, context):
         total, count = get_user_stats(user_id)
         username_text = f"@{query.from_user.username}" if query.from_user.username else "የለውም"
         msg = (
-            f'<tg-emoji emoji-id="5431577498364158238">📊</tg-emoji> <b>My Status & Stats</b>\n\n'
-            f'👤 <b>Username:</b> {username_text}\n'
-            f'🆔 <b>ID:</b> <code>{user_id}</code>\n\n'
-            f'💬 <b>Your Messages:</b> {count}\n'
-            f'👥 <b>Bot Users:</b> {total}\n\n'
-            '🔥 <b>Engagement: Active</b>'
+            f"📊 <b>My Status &amp; Stats</b>\n\n"
+            f"👤 <b>Username:</b> {username_text}\n"
+            f"🆔 <b>ID:</b> <code>{user_id}</code>\n\n"
+            f"💬 <b>Your Messages:</b> {count}\n"
+            f"👥 <b>Bot Users:</b> {total}\n\n"
+            f"🔥 <b>Engagement: Active</b>"
         )
         await query.edit_message_text(msg, reply_markup=get_back_keyboard(user_id), parse_mode="HTML")
         return
