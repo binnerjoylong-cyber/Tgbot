@@ -133,7 +133,7 @@ def get_user_stats(user_id):
     return total_users, user_msg_count
 
 # ============================================================
-# TRANSLATIONS (AMHARIC, ENGLISH & ARABIC)
+# TRANSLATIONS (AMHARIC, ENGLISH & ARABIC WITH CUSTOM EMOJIS)
 # ============================================================
 
 TRANSLATIONS = {
@@ -192,8 +192,7 @@ TRANSLATIONS = {
             '<tg-emoji emoji-id="5305545479814161889">💬</tg-emoji> <b>Support & Downloader Help</b>\n\n'
             '<tg-emoji emoji-id="5305655375142364109">📺</tg-emoji> '
             '<b>ቪዲዮ/ፎቶ ለማውረድ:</b> የ Tiktok, Instagram, Facebook, Reddit, Twitch, Vimeo, SoundCloud, Threads እና ሌሎች ሊንክ ቀጥታ ለቦቱ ይላኩ።\n\n'
-            '<tg-emoji emoji-id="5305289658677108341">📹</tg-emoji> '
-            '<b>Video to Audio:</b> ማናቸውንም ቪዲዮ ከስልክዎ ይላኩ፣ ወደ MP3 Audio ቀይሮ ይልክልዎታል።\n\n'
+            '<tg-emoji emoji-id="5305289658677108341">📹</tg-emoji> <b>Video to Audio:</b> ማናቸውንም ቪዲዮ ከስልክዎ ይላኩ፣ ወደ MP3 Audio ቀይሮ ይልክልዎታል።\n\n'
             '<tg-emoji emoji-id="5949327894567195412">👩‍💻</tg-emoji> ለአድሚን መልዕክት ለመላክም እዚሁ መጻፍ ይችላሉ።'
         )
     },
@@ -265,7 +264,7 @@ TRANSLATIONS = {
         "loading": '<tg-emoji emoji-id="5305254783542667121">⏳</tg-emoji> <b>جاري التحميل...</b>',
         "video_converted": '<tg-emoji emoji-id="5305534793935527938">🎵</tg-emoji> <b>الصوت المستخرج</b>\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>تم التحويل بواسطة</b> @{bot_username} & @mame_posts',
         "video_downloaded": '<tg-emoji emoji-id="530762354187772738">🚀</tg-emoji> <b>Downloaded with</b> @{bot_username} & @mame_posts\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Enjoy!</b>',
-        "size_limit": "⚠️ <b>حجم الملف أكبر من 50 ميغابايት!</b>",
+        "size_limit": "⚠️ <b>حجم الملف أكبر من 50 ميغابايت!</b>",
         "fail_download": "💔 <b>تعذر تحميل الملف! يرجى التأكد من أن الرابط عام.</b>",
         "photo_download": '📸 <b>الصورة / الصورة المصغرة المحملة</b>\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>تم التحميل بواسطة</b> @{bot_username}',
         "welcome": (
@@ -619,7 +618,7 @@ async def convert_video_to_audio(update, context):
                     pass
 
 # ============================================================
-# SAFE URL CLEANER (NEVER DESTROYS YOUTUBE LINKS)
+# SAFE URL CLEANER (NEVER BREAKS QUERY FORMATS)
 # ============================================================
 
 def clean_url(raw_url: str) -> str:
@@ -635,7 +634,7 @@ def clean_url(raw_url: str) -> str:
     if youtu_be_match:
         return f"https://www.youtube.com/watch?v={youtu_be_match.group(1)}"
 
-    # Standard YouTube watch URL: preserve ?v= clean
+    # YouTube Watch URL: extract clean 'v' parameter safely
     if "youtube.com/watch" in url:
         parsed = urlparse(url)
         query = parse_qs(parsed.query)
@@ -765,13 +764,13 @@ async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE
             except Exception as thumb_err:
                 print("Thumbnail send error:", thumb_err)
 
-        # 3. SEND VIDEO (CLEAN RE-ENCODED CONTAINER TO PREVENT Document_invalid)
+        # 3. SEND VIDEO (FIXED CONTAINER & SAFE STREAMING)
         if actual_video and os.path.exists(actual_video):
             file_size = os.path.getsize(actual_video)
             if file_size > 1000 and file_size <= 50 * 1024 * 1024:
                 await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_VIDEO)
 
-                # Re-mux to guaranteed Telegram MP4 format with +faststart
+                # Remux cleanly to faststart MP4 for reliable Telegram playback
                 ready_video_path = f"{media_prefix}_ready.mp4"
                 remux_cmd = [
                     ffmpeg_bin, "-y",
@@ -785,10 +784,8 @@ async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE
                 await asyncio.to_thread(subprocess.run, remux_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
                 target_file = ready_video_path if (os.path.exists(ready_video_path) and os.path.getsize(ready_video_path) > 1000) else actual_video
-
                 caption_text = f'<tg-emoji emoji-id="530762354187772738">🚀</tg-emoji> <b>Downloaded with</b> @{bot_username} & @mame_posts\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Enjoy!</b>'
 
-                # Safe binary stream delivery
                 video_sent = False
                 try:
                     with open(target_file, 'rb') as vf:
@@ -802,9 +799,9 @@ async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE
                     video_sent = True
                     sent_any = True
                 except Exception as vid_err:
-                    print("reply_video raw error:", vid_err)
+                    print("reply_video error:", vid_err)
 
-                # If reply_video rejected, send cleanly as MP4 Document
+                # Safe fallback to Document if reply_video fails
                 if not video_sent:
                     try:
                         with open(target_file, 'rb') as doc_f:
@@ -816,7 +813,7 @@ async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE
                             )
                         sent_any = True
                     except Exception as doc_err:
-                        print("reply_document raw error:", doc_err)
+                        print("Document fallback error:", doc_err)
 
                 # 4. EXTRACT & SEND AUDIO (MP3)
                 audio_output = f"audio_{user_id}_{update.message.message_id}.mp3"
@@ -1076,7 +1073,7 @@ def main():
 
     keep_alive()
 
-    # Increase network timeouts for large video files
+    # Network timeouts extended to 300s to avoid large file upload timeouts
     application = (
         ApplicationBuilder()
         .token(TOKEN)
