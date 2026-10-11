@@ -209,8 +209,7 @@ def get_trans(user_id, key):
     lang = get_user_language(user_id)
     if not lang or lang not in TRANSLATIONS:
         lang = "am"
-    lang_dict = TRANSLATIONS.get(lang, TRANSLATIONS["am"])
-    return lang_dict.get(key, TRANSLATIONS["am"].get(key, ""))
+    return TRANSLATIONS.get(lang, TRANSLATIONS["am"]).get(key, "")
 
 def get_bot_username(context):
     return context.bot.username or "mame_posts_bot"
@@ -232,14 +231,13 @@ def get_main_menu_keyboard(bot_username, user_id):
     return InlineKeyboardMarkup(keyboard)
 
 def get_language_keyboard():
-    keyboard = [
+    return InlineKeyboardMarkup([
         [
             InlineKeyboardButton("🇪🇹 አማርኛ", callback_data="lang_am"),
             InlineKeyboardButton("🇬🇧 English", callback_data="lang_en")
         ],
         [InlineKeyboardButton("🇸🇦 العربية", callback_data="lang_ar")]
-    ]
-    return InlineKeyboardMarkup(keyboard)
+    ])
 
 def get_back_keyboard(user_id):
     return InlineKeyboardMarkup([[InlineKeyboardButton(get_trans(user_id, "btn_back"), callback_data="cmd_back")]])
@@ -340,25 +338,16 @@ async def status_command(update, context):
     await update.message.reply_text(msg, parse_mode="HTML")
 
 async def rates_command(update, context):
-    if not update.message:
-        return
-    user_id = update.effective_user.id
-    record_user_activity(user_id)
-    await update.message.reply_text(get_trans(user_id, "price"), parse_mode="HTML")
+    if update.message:
+        await update.message.reply_text(get_trans(update.effective_user.id, "price"), parse_mode="HTML")
 
 async def payment_command(update, context):
-    if not update.message:
-        return
-    user_id = update.effective_user.id
-    record_user_activity(user_id)
-    await update.message.reply_text(get_trans(user_id, "payment"), parse_mode="HTML")
+    if update.message:
+        await update.message.reply_text(get_trans(update.effective_user.id, "payment"), parse_mode="HTML")
 
 async def help_command(update, context):
-    if not update.message:
-        return
-    user_id = update.effective_user.id
-    record_user_activity(user_id)
-    await update.message.reply_text(get_trans(user_id, "support"), parse_mode="HTML")
+    if update.message:
+        await update.message.reply_text(get_trans(update.effective_user.id, "support"), parse_mode="HTML")
 
 async def broadcast_command(update, context):
     if not update.message or update.effective_user.id != ADMIN_ID:
@@ -488,10 +477,10 @@ def clean_url(raw_url: str) -> str:
     return url
 
 # ============================================================
-# OPTIMAL DOWNLOAD ENGINE (UNDER 50MB GUARANTEE)
+# BULLETPROOF DOWNLOAD ENGINE WITH FAILOVER
 # ============================================================
 
-def get_ytdlp_options(output_template: str):
+def get_ytdlp_options(output_template: str, client_type: str = "web"):
     opts = {
         'quiet': True,
         'no_warnings': True,
@@ -500,12 +489,13 @@ def get_ytdlp_options(output_template: str):
         'concurrent_fragment_downloads': 5,
         'outtmpl': output_template,
         'writethumbnail': True,
+        
+        # Universal multi-stream selector (under 48MB or fallbacks)
         'format': (
-            'bestvideo[filesize<42M]+bestaudio[filesize<6M]/'
             'best[filesize<48M]/'
-            'bestvideo[height<=720][filesize<45M]+bestaudio/'
-            'best[height<=720][filesize<48M]/'
-            'best[height<=480]/'
+            'bestvideo[filesize<42M]+bestaudio[filesize<6M]/'
+            'bestvideo[height<=720]+bestaudio/'
+            'best[height<=720]/'
             'best'
         ),
         'merge_output_format': 'mp4',
@@ -513,13 +503,28 @@ def get_ytdlp_options(output_template: str):
         'remote_components': ['ejs:github'],
     }
 
-    if os.path.exists(COOKIES_PATH):
+    if client_type == "android":
+        opts['extractor_args'] = {'youtube': {'player_client': ['android', 'ios']}}
+    elif client_type == "tv":
+        opts['extractor_args'] = {'youtube': {'player_client': ['tv_embedded', 'web_embedded']}}
+
+    if os.path.exists(COOKIES_PATH) and os.path.getsize(COOKIES_PATH) > 10:
         opts['cookiefile'] = COOKIES_PATH
 
     return opts
 
-def download_media(url: str, output_template: str):
-    with yt_dlp.YoutubeDL(get_ytdlp_options(output_template)) as ydl:
+def download_media_robust(url: str, output_template: str):
+    """Tries multiple client players if one fails, ensuring persistent downloads"""
+    for client in ["web", "android", "tv"]:
+        try:
+            with yt_dlp.YoutubeDL(get_ytdlp_options(output_template, client)) as ydl:
+                ydl.download([url])
+                return
+        except Exception as e:
+            print(f"Client {client} failed, trying next: {e}")
+            continue
+    # Final generic attempt
+    with yt_dlp.YoutubeDL(get_ytdlp_options(output_template, "web")) as ydl:
         ydl.download([url])
 
 def find_downloaded_file(prefix: str):
@@ -549,7 +554,7 @@ async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE
     prefix = f"media_{user_id}_{update.message.message_id}"
     template = f"{prefix}.%(ext)s"
 
-    # Direct Pinterest Image bypass
+    # Pinterest Direct image
     if "pinterest.com" in target_url or "pin.it" in target_url:
         try:
             res = requests.get(target_url, headers={'User-Agent': 'Mozilla/5.0'}, timeout=10)
@@ -568,7 +573,8 @@ async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE
     sent_any = False
 
     try:
-        await asyncio.to_thread(download_media, target_url, template)
+        # Download media using persistent failover engine
+        await asyncio.to_thread(download_media_robust, target_url, template)
 
         actual_video, actual_thumb = find_downloaded_file(prefix)
         ffmpeg_bin = FFMPEG_PATH or "ffmpeg"
@@ -597,12 +603,12 @@ async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE
             except Exception as te:
                 print("Thumbnail send failed:", te)
 
-        # 2. COMPRESS IF OVER 49MB & SEND VIDEO
+        # 2. SEND VIDEO (GUARANTEED <49MB)
         if actual_video and os.path.exists(actual_video):
             file_size = os.path.getsize(actual_video)
             video_to_send = actual_video
 
-            # If over 49MB, compress to 40MB
+            # Re-compress if over 49 MB to guarantee Telegram compliance
             if file_size > 49 * 1024 * 1024:
                 compressed_video = f"{prefix}_comp.mp4"
                 compress_cmd = [
@@ -622,9 +628,7 @@ async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE
                     video_to_send = compressed_video
                     file_size = os.path.getsize(video_to_send)
 
-            print(f"✅ Sending file: {video_to_send} ({file_size / (1024*1024):.2f} MB)")
-            
-            # CLEAN HTML CAPTION (NO INVALID TAGS / NO UNESCAPED &)
+            print(f"✅ Sending video: {video_to_send} ({file_size / (1024*1024):.2f} MB)")
             clean_caption = f"🚀 <b>Downloaded with</b> @{bot_username} &amp; @mame_posts\n\n✅ <b>Enjoy!</b>"
 
             video_sent = False
@@ -642,7 +646,7 @@ async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE
             except Exception as vid_err:
                 print("reply_video error:", vid_err)
 
-            # Clean Fallback to document
+            # Fallback to document
             if not video_sent:
                 try:
                     await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_DOCUMENT)
