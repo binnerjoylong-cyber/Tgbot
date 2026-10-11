@@ -7,6 +7,7 @@ import requests
 import shutil
 import static_ffmpeg
 
+# FFmpeg setup
 try:
     static_ffmpeg.add_paths()
 except Exception as e:
@@ -38,7 +39,15 @@ from telegram.ext import (
 import yt_dlp
 
 # ============================================================
-# FLASK WEB SERVER
+# COOKIES PATH SETUP
+# ============================================================
+
+COOKIES_PATH = "/root/Tgbot/cookies.txt"
+if not os.path.exists(COOKIES_PATH):
+    COOKIES_PATH = os.path.abspath("cookies.txt")
+
+# ============================================================
+# FLASK WEB SERVER (KEEP ALIVE)
 # ============================================================
 
 app_web = Flask(__name__)
@@ -305,10 +314,74 @@ async def broadcast_command(update, context):
     await update.message.reply_text(f"✅ Broadcast sent to {count} users.")
 
 # ============================================================
-# ROBUST DOWNLOAD ENGINE
+# VIDEO TO AUDIO CONVERTER
 # ============================================================
 
-def clean_target_url(raw_url: str) -> str:
+async def convert_video_to_audio(update, context):
+    if not update.message:
+        return
+
+    user_id = update.effective_user.id
+    record_user_activity(user_id)
+
+    if not await is_joined(update, context):
+        await show_force_join(update, context)
+        return
+
+    video = update.message.video or update.message.video_note
+    if not video and update.message.document and update.message.document.mime_type and update.message.document.mime_type.startswith("video/"):
+        video = update.message.document
+
+    if not video:
+        return
+
+    file_id = update.message.message_id
+    input_path = f"input_vid_{user_id}_{file_id}.mp4"
+    output_path = f"output_aud_{user_id}_{file_id}.mp3"
+    status_msg = None
+
+    try:
+        await context.bot.send_chat_action(chat_id=update.effective_chat.id, action=ChatAction.RECORD_VOICE)
+        status_msg = await update.message.reply_text(get_trans(user_id, "loading"), parse_mode="HTML")
+
+        tg_file = await video.get_file()
+        await tg_file.download_to_drive(input_path)
+
+        ffmpeg_bin = FFMPEG_PATH if FFMPEG_PATH else "ffmpeg"
+        cmd = [ffmpeg_bin, "-y", "-i", input_path, "-vn", "-acodec", "libmp3lame", "-q:a", "2", output_path]
+        result = await asyncio.to_thread(subprocess.run, cmd, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True, timeout=300)
+
+        if result.returncode != 0 or not os.path.exists(output_path):
+            raise RuntimeError("FFmpeg error")
+
+        bot_username = get_bot_username(context)
+        with open(output_path, "rb") as audio_file:
+            await update.message.reply_audio(
+                audio=audio_file,
+                caption=get_trans(user_id, "video_converted").format(bot_username=bot_username),
+                parse_mode="HTML"
+            )
+
+        if status_msg:
+            await status_msg.delete()
+
+    except Exception as e:
+        print("Video to Audio Error:", e)
+        if status_msg:
+            await status_msg.edit_text(get_trans(user_id, "fail_download"), parse_mode="HTML")
+    finally:
+        for path in [input_path, output_path]:
+            if os.path.exists(path):
+                try:
+                    os.remove(path)
+                except Exception:
+                    pass
+
+# ============================================================
+# MODERN URL DOWNLOAD ENGINE WITH DENO & EJS GITHUB FIX
+# ============================================================
+
+def clean_url(raw_url: str) -> str:
     url = re.sub(r'(\?|&)si=[^&]+', '', raw_url)
     url = re.sub(r'(\?|&)feature=[^&]+', '', url)
     shorts = re.search(r'youtube\.com/shorts/([a-zA-Z0-9_-]+)', url)
@@ -316,56 +389,44 @@ def clean_target_url(raw_url: str) -> str:
         return f"https://www.youtube.com/watch?v={shorts.group(1)}"
     return url
 
-def download_via_cobalt(url: str, output_path: str) -> bool:
-    """Alternative API that completely bypasses YouTube Datacenter bot-check."""
-    try:
-        api_endpoints = [
-            "https://api.cobalt.tools/api/json",
-            "https://cobalt-api.kwiatekm.tokyo/api/json"
-        ]
-        headers = {
-            "Accept": "application/json",
-            "Content-Type": "application/json",
-            "User-Agent": "Mozilla/5.0"
-        }
-        payload = {
-            "url": url,
-            "vQuality": "720",
-            "filenamePattern": "basic"
-        }
-
-        for ep in api_endpoints:
-            try:
-                res = requests.post(ep, json=payload, headers=headers, timeout=15)
-                data = res.json()
-                video_url = data.get("url")
-                if video_url:
-                    r = requests.get(video_url, stream=True, timeout=60)
-                    if r.status_code == 200:
-                        with open(output_path, "wb") as f:
-                            for chunk in r.iter_content(chunk_size=1024 * 1024):
-                                if chunk:
-                                    f.write(chunk)
-                        if os.path.exists(output_path) and os.path.getsize(output_path) > 1000:
-                            return True
-            except Exception:
-                continue
-    except Exception as e:
-        print("Cobalt fallback failed:", e)
-    return False
-
-def download_via_ytdlp(url: str, output_template: str):
+def get_ytdlp_options(output_template: str):
+    """Exact working settings that solved JS challenges using Deno"""
     opts = {
         'quiet': True,
         'no_warnings': True,
         'nocheckcertificate': True,
+        'geo_bypass': True,
+        'concurrent_fragment_downloads': 5,
         'outtmpl': output_template,
         'writethumbnail': True,
-        'format': 'best[ext=mp4][filesize<50M]/best[filesize<50M]/best',
-        'merge_output_format': 'mp4'
+        'merge_output_format': 'mp4',
+        'format': 'bestvideo[ext=mp4][filesize<45M]+bestaudio[ext=m4a]/best[ext=mp4][filesize<50M]/best[filesize<50M]/best',
+        
+        # KEY PARAMETERS TESTED & VERIFIED BY YOU:
+        'js_runtimes': {'deno': {'path': '/root/.deno/bin/deno'}},
+        'remote_components': ['ejs:github'],
     }
-    with yt_dlp.YoutubeDL(opts) as ydl:
+
+    if os.path.exists(COOKIES_PATH):
+        opts['cookiefile'] = COOKIES_PATH
+
+    return opts
+
+def download_media(url: str, output_template: str):
+    with yt_dlp.YoutubeDL(get_ytdlp_options(output_template)) as ydl:
         ydl.download([url])
+
+def find_downloaded_file(prefix: str):
+    video_file = None
+    thumb_file = None
+    for f in os.listdir('.'):
+        if f.startswith(prefix) and not f.endswith(('.part', '.ytdl', '.temp')):
+            ext = os.path.splitext(f)[1].lower()
+            if ext in ['.jpg', '.jpeg', '.png', '.webp']:
+                thumb_file = f
+            elif ext in ['.mp4', '.mkv', '.webm', '.mov', '.avi']:
+                video_file = f
+    return video_file, thumb_file
 
 async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE, raw_url: str):
     chat_id = update.effective_chat.id
@@ -375,85 +436,110 @@ async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE
     await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_DOCUMENT)
     status_msg = await update.message.reply_text(get_trans(user_id, "loading"), parse_mode="HTML")
 
-    clean_url = clean_target_url(raw_url)
+    target_url = clean_url(raw_url)
     prefix = f"media_{user_id}_{update.message.message_id}"
-    video_out = f"{prefix}.mp4"
-    audio_out = f"audio_{user_id}_{update.message.message_id}.mp3"
-    thumb_out = f"{prefix}.jpg"
+    template = f"{prefix}.%(ext)s"
 
-    downloaded = False
-
-    # 1. YouTube specific: Try Cobalt API first to avoid 152-18 Bot Detection
-    if any(d in clean_url.lower() for d in ["youtube.com", "youtu.be"]):
-        downloaded = await asyncio.to_thread(download_via_cobalt, clean_url, video_out)
-
-    # 2. If not YouTube or Cobalt failed, fallback to yt-dlp
-    if not downloaded:
+    # Direct Pinterest Image bypass
+    if "pinterest.com" in target_url or "pin.it" in target_url:
         try:
-            await asyncio.to_thread(download_via_ytdlp, clean_url, f"{prefix}.%(ext)s")
-            for f in os.listdir('.'):
-                if f.startswith(prefix) and not f.endswith(('.part', '.temp')):
-                    ext = os.path.splitext(f)[1].lower()
-                    if ext in ['.mp4', '.mkv', '.webm']:
-                        video_out = f
-                        downloaded = True
-                    elif ext in ['.jpg', '.jpeg', '.webp']:
-                        thumb_out = f
-        except Exception as e:
-            print("yt-dlp general error:", e)
+            res = requests.get(target_url, headers={'User-Agent': 'Mozilla/5.0'}, timeout=10)
+            img_matches = re.findall(r'https://i\.pinimg\.com/(?:originals|736x)/[^\s"\'\>]+\.(?:jpg|png|jpeg|webp)', res.text)
+            if img_matches:
+                await update.message.reply_photo(
+                    photo=img_matches[0],
+                    caption=get_trans(user_id, "photo_download").format(bot_username=bot_username),
+                    parse_mode="HTML"
+                )
+                await status_msg.delete()
+                return
+        except Exception:
+            pass
 
-    # Check and Send Output
     sent_any = False
-    ffmpeg_bin = FFMPEG_PATH or "ffmpeg"
 
-    if os.path.exists(video_out) and os.path.getsize(video_out) > 0:
-        # Generate thumbnail from video if not already present
-        if not os.path.exists(thumb_out):
-            thumb_gen = f"{prefix}_thumb.jpg"
-            subprocess.run([ffmpeg_bin, "-y", "-ss", "00:00:01", "-i", video_out, "-vframes", "1", thumb_gen], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            if os.path.exists(thumb_gen):
-                thumb_out = thumb_gen
+    try:
+        # Download media using tested Deno + EJS config
+        await asyncio.to_thread(download_media, target_url, template)
 
-        # Send Thumbnail
-        if os.path.exists(thumb_out):
+        actual_video, actual_thumb = find_downloaded_file(prefix)
+        ffmpeg_bin = FFMPEG_PATH or "ffmpeg"
+
+        # 1. SEND THUMBNAIL (Converted to JPG if WebP)
+        if actual_thumb and os.path.exists(actual_thumb):
+            clean_thumb = actual_thumb
             try:
-                with open(thumb_out, "rb") as tf:
-                    await update.message.reply_photo(photo=tf, caption=get_trans(user_id, "photo_download").format(bot_username=bot_username), parse_mode="HTML")
-            except Exception:
-                pass
-
-        # Send Video
-        if os.path.getsize(video_out) <= 50 * 1024 * 1024:
-            try:
-                with open(video_out, "rb") as vf:
-                    await update.message.reply_video(
-                        video=vf,
-                        caption=f"🚀 <b>Downloaded with</b> @{bot_username} & @mame_posts\n\n✅ <b>Enjoy!</b>",
-                        parse_mode="HTML",
-                        supports_streaming=True
+                if actual_thumb.lower().endswith(".webp"):
+                    clean_thumb = f"{prefix}_thumb.jpg"
+                    await asyncio.to_thread(
+                        subprocess.run,
+                        [ffmpeg_bin, "-y", "-i", actual_thumb, clean_thumb],
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL
                     )
-                sent_any = True
-            except Exception:
-                with open(video_out, "rb") as vf:
-                    await update.message.reply_document(document=vf, caption=f"🚀 @{bot_username}", parse_mode="HTML")
-                sent_any = True
 
-            # Extract and Send Audio
-            subprocess.run([ffmpeg_bin, "-y", "-i", video_out, "-vn", "-acodec", "libmp3lame", "-q:a", "2", audio_out], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            if os.path.exists(audio_out) and os.path.getsize(audio_out) > 0:
-                with open(audio_out, "rb") as af:
-                    await update.message.reply_audio(audio=af, caption=f"🎧 <b>Extracted Audio</b>\n\n✅ @{bot_username}", parse_mode="HTML")
-        else:
-            await status_msg.edit_text(get_trans(user_id, "size_limit"), parse_mode="HTML")
-            return
+                if os.path.exists(clean_thumb):
+                    with open(clean_thumb, 'rb') as tf:
+                        await update.message.reply_photo(
+                            photo=tf,
+                            caption=get_trans(user_id, "photo_download").format(bot_username=bot_username),
+                            parse_mode="HTML"
+                        )
+                    sent_any = True
+            except Exception as te:
+                print("Thumbnail send failed:", te)
 
-    # Clean Up Files
-    for f in os.listdir('.'):
-        if f.startswith(prefix) or f.startswith(f"audio_{user_id}_{update.message.message_id}"):
-            try:
-                os.remove(f)
-            except Exception:
-                pass
+        # 2. SEND VIDEO
+        if actual_video and os.path.exists(actual_video):
+            if os.path.getsize(actual_video) <= 50 * 1024 * 1024:
+                await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_VIDEO)
+                try:
+                    with open(actual_video, 'rb') as vf:
+                        await update.message.reply_video(
+                            video=vf,
+                            caption=f'🚀 <b>Downloaded with</b> @{bot_username} & @mame_posts\n\n✅ <b>Enjoy!</b>',
+                            parse_mode="HTML",
+                            supports_streaming=True
+                        )
+                    sent_any = True
+                except Exception as vid_err:
+                    print("reply_video failed, document fallback:", vid_err)
+                    with open(actual_video, 'rb') as doc_file:
+                        await update.message.reply_document(
+                            document=doc_file,
+                            caption=f'🚀 <b>Downloaded with</b> @{bot_username} & @mame_posts',
+                            parse_mode="HTML"
+                        )
+                    sent_any = True
+
+                # 3. EXTRACT & SEND AUDIO (MP3)
+                audio_output = f"audio_{user_id}_{update.message.message_id}.mp3"
+                cmd = [ffmpeg_bin, "-y", "-i", actual_video, "-vn", "-acodec", "libmp3lame", "-q:a", "2", audio_output]
+                await asyncio.to_thread(subprocess.run, cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+                if os.path.exists(audio_output) and os.path.getsize(audio_output) > 0:
+                    await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.RECORD_VOICE)
+                    with open(audio_output, 'rb') as af:
+                        await update.message.reply_audio(
+                            audio=af,
+                            caption=f'🎧 <b>Extracted Audio / BGM (MP3)</b>\n\n✅ <b>Downloaded with</b> @{bot_username}',
+                            parse_mode="HTML"
+                        )
+                    sent_any = True
+            else:
+                await status_msg.edit_text(get_trans(user_id, "size_limit"), parse_mode="HTML")
+                return
+
+    except Exception as e:
+        print("Download engine error:", e)
+
+    finally:
+        for f in os.listdir('.'):
+            if f.startswith(prefix) or f.startswith(f"audio_{user_id}_{update.message.message_id}"):
+                try:
+                    os.remove(f)
+                except Exception:
+                    pass
 
     if sent_any:
         try:
@@ -536,6 +622,10 @@ async def handle_user_messages(update, context):
     user_id = update.effective_user.id
     record_user_activity(user_id)
 
+    if update.message.video or update.message.video_note or (update.message.document and update.message.document.mime_type and update.message.document.mime_type.startswith("video/")):
+        await convert_video_to_audio(update, context)
+        return
+
     text = update.message.text or update.message.caption or ""
     if text.strip() == "🏠 Menu":
         await context.bot.send_message(
@@ -555,7 +645,7 @@ async def handle_user_messages(update, context):
         await handle_url_download(update, context, target)
         return
 
-    # Forward other messages to Admin
+    # Forward to admin
     try:
         header = f"📩 <b>New User Message</b>\n👤 Name: {update.effective_user.full_name}\n🆔 ID: <code>{user_id}</code>"
         h_msg = await context.bot.send_message(chat_id=ADMIN_ID, text=header, parse_mode="HTML")
@@ -584,7 +674,6 @@ async def admin_reply(update, context):
             await update.message.reply_text(f"❌ Failed: {e}")
 
 async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE):
-    # Ignore polling conflict in console to prevent spamming
     if "Conflict: terminated by other getUpdates request" not in str(context.error):
         print("❌ ERROR:", context.error)
 
