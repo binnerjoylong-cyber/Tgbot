@@ -273,7 +273,7 @@ TRANSLATIONS = {
             '<tg-emoji emoji-id="5305739801314501775">✅</tg-emoji> '
             '<b>خياراتي (يمكنك تحميل وتعديل الفيديوهات والصور والصوتيات من جميع منصات التواصل الاجتماعي):</b>\n\n'
             '<tg-emoji emoji-id="5305290882742788410">🎵</tg-emoji> | <b>Tiktok & Likee: مقاطع وصور</b>\n'
-            '<tg-emoji emoji-id="5305551797711053969">📸</tg-emoji> | <b>Pinterest & Instagram: ريلز، صور وستوري</b>\n'
+            '<tg-emoji emoji-id="5305551797711053969">📸</tg-emoji> | <b>Pinterest & Instagram: ريلズ، صور وستوري</b>\n'
             '<tg-emoji emoji-id="5305777524012262308">▶️</tg-emoji> | <b>YouTube: فيديوهات وموسيقى (كامل وShorts)</b>\n'
             '<tg-emoji emoji-id="5305474827602140530">✖️</tg-emoji> | <b>Twitter (X): فيديوهات وتغريدات صوتية</b>\n'
             '<tg-emoji emoji-id="5305311717629142471">📘</tg-emoji> | <b>Facebook, Reddit, Twitch, Vimeo وغيرها</b>\n'
@@ -619,7 +619,7 @@ async def convert_video_to_audio(update, context):
                     pass
 
 # ============================================================
-# SAFE URL CLEANER (NEVER MESSES UP ?v= QUERY)
+# SAFE URL CLEANER (NEVER DESTROYS YOUTUBE LINKS)
 # ============================================================
 
 def clean_url(raw_url: str) -> str:
@@ -635,7 +635,7 @@ def clean_url(raw_url: str) -> str:
     if youtu_be_match:
         return f"https://www.youtube.com/watch?v={youtu_be_match.group(1)}"
 
-    # Standard YouTube watch URL: clean query but keep ?v= intact
+    # Standard YouTube watch URL: preserve ?v= clean
     if "youtube.com/watch" in url:
         parsed = urlparse(url)
         query = parse_qs(parsed.query)
@@ -765,25 +765,29 @@ async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE
             except Exception as thumb_err:
                 print("Thumbnail send error:", thumb_err)
 
-        # 3. SEND VIDEO (Remux to standard faststart MP4 to prevent Document_invalid)
+        # 3. SEND VIDEO (BULLETPROOF REMUX TO AVOID Document_invalid)
         if actual_video and os.path.exists(actual_video):
             file_size = os.path.getsize(actual_video)
-            if 0 < file_size <= 50 * 1024 * 1024:
+            if file_size > 1000 and file_size <= 50 * 1024 * 1024:
                 await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_VIDEO)
 
-                # Convert container safely using faststart for Telegram
-                ready_video_path = f"{media_prefix}_stream.mp4"
-                await asyncio.to_thread(
-                    subprocess.run,
-                    [ffmpeg_bin, "-y", "-i", actual_video, "-c", "copy", "-movflags", "+faststart", ready_video_path],
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL
-                )
+                # Direct remux to standard mp4 container with faststart (fixes Telegram desktop/mobile playback)
+                final_video_file = f"{media_prefix}_telegram.mp4"
+                remux_cmd = [
+                    ffmpeg_bin, "-y",
+                    "-i", actual_video,
+                    "-c:v", "copy",
+                    "-c:a", "copy",
+                    "-movflags", "+faststart",
+                    final_video_file
+                ]
+                await asyncio.to_thread(subprocess.run, remux_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-                send_target = ready_video_path if (os.path.exists(ready_video_path) and os.path.getsize(ready_video_path) > 0) else actual_video
+                video_to_upload = final_video_file if (os.path.exists(final_video_file) and os.path.getsize(final_video_file) > 1000) else actual_video
 
+                video_sent_successfully = False
                 try:
-                    with open(send_target, 'rb') as vf:
+                    with open(video_to_upload, 'rb') as vf:
                         await update.message.reply_video(
                             video=vf,
                             caption=f'<tg-emoji emoji-id="530762354187772738">🚀</tg-emoji> <b>Downloaded with</b> @{bot_username} & @mame_posts\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Enjoy!</b>',
@@ -791,21 +795,25 @@ async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE
                             parse_mode="HTML",
                             supports_streaming=True
                         )
+                    video_sent_successfully = True
                     sent_any = True
                 except Exception as vid_err:
-                    print("reply_video failed, trying safe document fallback:", vid_err)
+                    print("reply_video error:", vid_err)
+
+                # Fallback to Document ONLY if reply_video failed
+                if not video_sent_successfully:
                     try:
-                        with open(send_target, 'rb') as doc_file:
+                        with open(video_to_upload, 'rb') as doc_file:
                             await update.message.reply_document(
                                 document=doc_file,
-                                filename="video.mp4",
+                                filename=f"video_{update.message.message_id}.mp4",
                                 caption=f'<tg-emoji emoji-id="530762354187772738">🚀</tg-emoji> <b>Downloaded with</b> @{bot_username} & @mame_posts',
                                 reply_markup=reply_markup_share,
                                 parse_mode="HTML"
                             )
                         sent_any = True
                     except Exception as doc_err:
-                        print("reply_document fallback also failed:", doc_err)
+                        print("Document fallback failed:", doc_err)
 
                 # 4. EXTRACT & SEND AUDIO (MP3)
                 audio_output = f"audio_{user_id}_{update.message.message_id}.mp3"
