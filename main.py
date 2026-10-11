@@ -7,7 +7,6 @@ import requests
 import shutil
 import static_ffmpeg
 
-# FFmpeg setup
 try:
     static_ffmpeg.add_paths()
 except Exception as e:
@@ -39,41 +38,7 @@ from telegram.ext import (
 import yt_dlp
 
 # ============================================================
-# CREATE & SANITIZE NETSCAPE COOKIES FILE
-# ============================================================
-
-def sanitize_and_write_cookies(raw_text: str, file_path="cookies.txt"):
-    """Fixes space-separated cookies and writes tab-separated Netscape format."""
-    lines = raw_text.replace("\\n", "\n").splitlines()
-    cleaned_lines = ["# Netscape HTTP Cookie File\n"]
-    for line in lines:
-        line = line.strip()
-        if not line or line.startswith("#"):
-            continue
-        parts = line.split()
-        if len(parts) >= 7:
-            domain, flag, path, secure, expiry, name = parts[:6]
-            value = " ".join(parts[6:])
-            cleaned_lines.append(f"{domain}\t{flag}\t{path}\t{secure}\t{expiry}\t{name}\t{value}\n")
-    
-    with open(file_path, "w", encoding="utf-8") as f:
-        f.writelines(cleaned_lines)
-    print("✅ cookies.txt formatted with valid TAB separators!")
-
-COOKIES_ENV = os.environ.get("YOUTUBE_COOKIES")
-
-if COOKIES_ENV:
-    sanitize_and_write_cookies(COOKIES_ENV)
-elif os.path.exists("cookies.txt"):
-    try:
-        with open("cookies.txt", "r", encoding="utf-8") as f:
-            content = f.read()
-        sanitize_and_write_cookies(content)
-    except Exception as e:
-        print("Cookie sanitize warning:", e)
-
-# ============================================================
-# FLASK WEB SERVER (KEEP ALIVE)
+# FLASK WEB SERVER
 # ============================================================
 
 app_web = Flask(__name__)
@@ -166,79 +131,58 @@ TRANSLATIONS = {
         "btn_support": "Support | ድጋፍ",
         "btn_back": "Back to Menu",
         "done_msg": "✅ <b>ተጠናቋል! ቋንቋዎ ተስተካክሏል።</b>",
-        "loading": '<tg-emoji emoji-id="5305254783542667121">⏳</tg-emoji> <b>Loading|ይጠብቁ...</b>',
-        "video_converted": '<tg-emoji emoji-id="5305534793935527938">🎵</tg-emoji> <b>ከቪዲዮ የተቀየረው (Extracted Audio)</b>\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Converted with</b> @{bot_username} & @mame_posts',
-        "video_downloaded": '<tg-emoji emoji-id="530762354187772738">🚀</tg-emoji> <b>Downloaded with</b> @{bot_username} & @mame_posts\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Enjoy!</b>',
+        "loading": '⏳ <b>Loading|ይጠብቁ...</b>',
+        "video_converted": '🎵 <b>Extracted Audio</b>\n\n✅ <b>Converted with</b> @{bot_username} & @mame_posts',
         "size_limit": "⚠️ <b>ቪዲዮው ከ 50MB በላይ ስለሆነ በቴሌግራም መላክ አይቻልም!</b>",
-        "fail_download": "💔 <b> የፈለጉትን File ማግኘት አልቻልኩም!</b>\n\nእባክዎ የላኩት ሊንክ private አለመሆኑን አረጋግጠው እንደገና ይሞክሩ።",
-        "photo_download": '📸 <b>Downloaded Thumbnail/Photo</b>\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Downloaded with</b> @{bot_username}',
-        "welcome": (
-            'Hello <tg-emoji emoji-id="5305577086478489521">🚨</tg-emoji>\n\n'
-            '<tg-emoji emoji-id="5305739801314501775">✅</tg-emoji> <b>My options:</b>\n\n'
-            '🎵 | <b>Tiktok & Likee: videos & photos</b>\n'
-            '📸 | <b>Pinterest & Instagram: reels, photos & stories</b>\n'
-            '▶️ | <b>YouTube: videos & music (Full & Shorts)</b>\n'
-            '✖️ | <b>Twitter (X): videos & voice</b>\n'
-            '📘 | <b>Facebook, Reddit, Twitch, Vimeo & Others</b>\n'
-            '📹 <b>Video to Audio Converter</b>'
-        ),
-        "price": '💰 <b>የማስታወቂያ ዋጋዎች</b>\n\n12 Hours — <b>በስምምነት ETB</b>\n24 Hours — <b>500 ETB</b>\n48 Hours — <b>700 ETB</b>',
-        "order": '📢 <b>@mame_posts ቻናል ላይ ማስታወቂያ ለማሰራት መልእክት ይላኩ።</b>',
-        "payment": '💳 <b>Payment Method</b>\n\n🏦 CBE: <code>1000528274394</code> (Mohammed Seid)\n📱 Telebirr: <code>+251963266849</code>',
-        "support": '💬 <b>Support:</b> Send links directly to download or send videos to convert to MP3.'
+        "fail_download": "💔 <b>የፈለጉትን File ማግኘት አልቻልኩም! እባክዎ እንደገና ይሞክሩ።</b>",
+        "photo_download": '📸 <b>Downloaded Thumbnail/Photo</b>\n\n✅ <b>Downloaded with</b> @{bot_username}',
+        "welcome": 'Hello 🚨\n\n<b>ከሁሉም Social Media ቪዲዮ ማውረድ ይችላሉ!</b>',
+        "price": '💰 12 Hours: በስምምነት | 24 Hours: 500 ETB',
+        "order": '📢 @mame_posts ላይ ማስታወቂያ ለማሰራት ፖስት ይላኩ።',
+        "payment": '💳 CBE: <code>1000528274394</code> | Telebirr: <code>+251963266849</code>',
+        "support": '💬 እርዳታ ከፈለጉ መልእክት ይላኩ።'
     },
     "en": {
-        "btn_add": "Add a bot to the chat",
-        "btn_order": "Promote / Advertise",
-        "btn_price": "Price & Rates",
+        "btn_add": "Add bot to group",
+        "btn_order": "Advertise",
+        "btn_price": "Rates",
         "btn_payment": "Payment Method",
-        "btn_status": "My Status & Stats",
-        "btn_lang": "Language | ቋንቋ",
-        "btn_support": "Support & Help",
+        "btn_status": "My Status",
+        "btn_lang": "Language",
+        "btn_support": "Help & Support",
         "btn_back": "Back to Menu",
-        "done_msg": "✅ <b>Done! Your language has been set.</b>",
-        "loading": '<tg-emoji emoji-id="5305254783542667121">⏳</tg-emoji> <b>Loading|Please wait...</b>',
-        "video_converted": '<tg-emoji emoji-id="5305534793935527938">🎵</tg-emoji> <b>Extracted Audio</b>\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Converted with</b> @{bot_username} & @mame_posts',
-        "video_downloaded": '<tg-emoji emoji-id="530762354187772738">🚀</tg-emoji> <b>Downloaded with</b> @{bot_username} & @mame_posts\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Enjoy!</b>',
-        "size_limit": "⚠️ <b>File is larger than 50MB! Telegram limit exceeded.</b>",
-        "fail_download": "💔 <b>Could not download the file! Please check if link is public.</b>",
-        "photo_download": '📸 <b>Downloaded Thumbnail/Photo</b>\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Downloaded with</b> @{bot_username}',
-        "welcome": (
-            'Hello <tg-emoji emoji-id="5305577086478489521">🚨</tg-emoji>\n\n'
-            '<tg-emoji emoji-id="5305739801314501775">✅</tg-emoji> <b>My options:</b>\n\n'
-            '🎵 | <b>Tiktok & Likee: videos & photos</b>\n'
-            '📸 | <b>Pinterest & Instagram: reels, photos & stories</b>\n'
-            '▶️ | <b>YouTube: videos & music (Full & Shorts)</b>\n'
-            '✖️ | <b>Twitter (X): videos & voice</b>\n'
-            '📘 | <b>Facebook, Reddit, Twitch, Vimeo & Others</b>\n'
-            '📹 <b>Video to Audio Converter</b>'
-        ),
-        "price": '💰 <b>Advertising Rates</b>\n\n12 Hours — <b>Negotiable</b>\n24 Hours — <b>500 ETB</b>\n48 Hours — <b>700 ETB</b>',
-        "order": '📢 <b>To Advertise on @mame_posts Channel, send your promo post.</b>',
-        "payment": '💳 <b>Payment Method</b>\n\n🏦 CBE: <code>1000528274394</code> (Mohammed Seid)\n📱 Telebirr: <code>+251963266849</code>',
-        "support": '💬 <b>Support:</b> Send links directly to download or send videos to convert to MP3.'
+        "done_msg": "✅ <b>Done! Language updated.</b>",
+        "loading": '⏳ <b>Loading, please wait...</b>',
+        "video_converted": '🎵 <b>Extracted Audio</b>\n\n✅ <b>Converted with</b> @{bot_username}',
+        "size_limit": "⚠️ <b>File exceeds Telegram 50MB limit!</b>",
+        "fail_download": "💔 <b>Could not download the file! Please verify the link.</b>",
+        "photo_download": '📸 <b>Thumbnail Downloaded</b>\n\n✅ @{bot_username}',
+        "welcome": 'Hello 🚨\n\n<b>Send any social media link to download videos, audio & photos!</b>',
+        "price": '💰 24 Hours: 500 ETB | 48 Hours: 700 ETB',
+        "order": '📢 Send your promo post to advertise on @mame_posts.',
+        "payment": '💳 CBE: <code>1000528274394</code> | Telebirr: <code>+251963266849</code>',
+        "support": '💬 Send your links directly here.'
     },
     "ar": {
-        "btn_add": "إضافة البوت إلى المجموعة",
+        "btn_add": "إضافة للمجموعة",
         "btn_order": "طلب إعلان",
-        "btn_price": "أسعار الإعلانات",
+        "btn_price": "الأسعار",
         "btn_payment": "طرق الدفع",
-        "btn_status": "حسابي وإحصائياتي",
-        "btn_lang": "Language | ቋንቋ",
-        "btn_support": "الدعم والتعليمات",
-        "btn_back": "العودة للقائمة",
-        "done_msg": "✅ <b>تم! تم تعيين لغتك.</b>",
-        "loading": '<tg-emoji emoji-id="5305254783542667121">⏳</tg-emoji> <b>جاري التحميل...</b>',
-        "video_converted": '<tg-emoji emoji-id="5305534793935527938">🎵</tg-emoji> <b>الصوت المستخرج</b>\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>تم التحويل بواسطة</b> @{bot_username} & @mame_posts',
-        "video_downloaded": '<tg-emoji emoji-id="530762354187772738">🚀</tg-emoji> <b>تم التحميل بواسطة</b> @{bot_username} & @mame_posts\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>استمتع!</b>',
-        "size_limit": "⚠️ <b>حجم الملف أكبر من 50 ميغابايت!</b>",
-        "fail_download": "💔 <b>تعذر تحميل الملف! يرجى التأكد من أن الرابط عام.</b>",
-        "photo_download": '📸 <b>الصورة المصغرة المحملة</b>\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>تم التحميل بواسطة</b> @{bot_username}',
-        "welcome": 'مرحباً بك! أرسل أي رابط لتحميل الفيديو، الصوت، والصورة المصغرة مباشرة.',
-        "price": '💰 <b>أسعار الإعلانات</b>\n\n24 ساعة — <b>500 ETB</b>\n48 ساعة — <b>700 ETB</b>',
-        "order": '📢 للإعلان على قناة @mame_posts أرسل رسالتك هنا.',
-        "payment": '💳 <b>طرق الدفع</b>\n\n🏦 CBE: <code>1000528274394</code>\n📱 Telebirr: <code>+251963266849</code>',
-        "support": '💬 أرسل الروابط مباشرة للتحميل.'
+        "btn_status": "إحصائياتي",
+        "btn_lang": "اللغة",
+        "btn_support": "الدعم",
+        "btn_back": "العودة",
+        "done_msg": "✅ <b>تم ضبط اللغة بنجاح.</b>",
+        "loading": '⏳ <b>جاري التحميل...</b>',
+        "video_converted": '🎵 <b>الصوت المستخرج</b>\n\n✅ @{bot_username}',
+        "size_limit": "⚠️ <b>حجم الملف أكبر من 50MB!</b>",
+        "fail_download": "💔 <b>تعذر تحميل الرابط!</b>",
+        "photo_download": '📸 <b>الصورة المصغرة</b>',
+        "welcome": 'مرحباً! أرسل أي رابط لتحميل الفيديو والموسيقى مباشرة.',
+        "price": '💰 24 ساعة: 500 ETB',
+        "order": '📢 للإعلان على @mame_posts',
+        "payment": '💳 CBE: <code>1000528274394</code>',
+        "support": '💬 أرسل الرابط للتحميل.'
     }
 }
 
@@ -246,115 +190,59 @@ def get_trans(user_id, key):
     lang = get_user_language(user_id)
     if not lang or lang not in TRANSLATIONS:
         lang = "am"
-    lang_dict = TRANSLATIONS.get(lang, TRANSLATIONS["am"])
-    return lang_dict.get(key, TRANSLATIONS["am"].get(key, ""))
+    return TRANSLATIONS.get(lang, TRANSLATIONS["am"]).get(key, "")
 
 def get_bot_username(context):
-    username = context.bot.username
-    return username if username else "mame_posts_bot"
+    return context.bot.username or "mame_posts_bot"
 
-def get_main_menu_keyboard(bot_username, user_id, use_custom_emoji=True):
-    def btn(text, callback_data=None, url=None, emoji_id=None):
-        kwargs = {"text": text}
-        if callback_data:
-            kwargs["callback_data"] = callback_data
-        if url:
-            kwargs["url"] = url
-        if use_custom_emoji and emoji_id:
-            kwargs["icon_custom_emoji_id"] = emoji_id
-        return InlineKeyboardButton(**kwargs)
-
+def get_main_menu_keyboard(bot_username, user_id):
     keyboard = [
-        [btn(get_trans(user_id, "btn_add"), url=f"https://t.me/{bot_username}?startgroup=true", emoji_id="5305545479814161889")],
-        [btn(get_trans(user_id, "btn_order"), callback_data="cmd_order", emoji_id="5267442591548320083")],
+        [InlineKeyboardButton(get_trans(user_id, "btn_add"), url=f"https://t.me/{bot_username}?startgroup=true")],
+        [InlineKeyboardButton(get_trans(user_id, "btn_order"), callback_data="cmd_order")],
         [
-            btn(get_trans(user_id, "btn_price"), callback_data="cmd_price", emoji_id="5447458260200214425"),
-            btn(get_trans(user_id, "btn_payment"), callback_data="cmd_payment", emoji_id="5186349709169525403")
+            InlineKeyboardButton(get_trans(user_id, "btn_price"), callback_data="cmd_price"),
+            InlineKeyboardButton(get_trans(user_id, "btn_payment"), callback_data="cmd_payment")
         ],
         [
-            btn(get_trans(user_id, "btn_status"), callback_data="cmd_status", emoji_id="5431577498364158238"),
-            btn(get_trans(user_id, "btn_lang"), callback_data="cmd_change_lang", emoji_id="5431577498364158238")
+            InlineKeyboardButton(get_trans(user_id, "btn_status"), callback_data="cmd_status"),
+            InlineKeyboardButton(get_trans(user_id, "btn_lang"), callback_data="cmd_change_lang")
         ],
-        [btn(get_trans(user_id, "btn_support"), callback_data="cmd_support", emoji_id="5949327894567195412")]
+        [InlineKeyboardButton(get_trans(user_id, "btn_support"), callback_data="cmd_support")]
     ]
     return InlineKeyboardMarkup(keyboard)
 
 def get_language_keyboard():
-    keyboard = [
-        [
-            InlineKeyboardButton("🇪🇹 አማርኛ", callback_data="lang_am"),
-            InlineKeyboardButton("🇬🇧 English", callback_data="lang_en")
-        ],
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton("🇪🇹 አማርኛ", callback_data="lang_am"), InlineKeyboardButton("🇬🇧 English", callback_data="lang_en")],
         [InlineKeyboardButton("🇸🇦 العربية", callback_data="lang_ar")]
-    ]
-    return InlineKeyboardMarkup(keyboard)
+    ])
 
-def get_back_keyboard(user_id, use_custom_emoji=True):
-    kwargs = {"text": get_trans(user_id, "btn_back"), "callback_data": "cmd_back"}
-    if use_custom_emoji:
-        kwargs["icon_custom_emoji_id"] = "5248948801674159296"
-    return InlineKeyboardMarkup([[InlineKeyboardButton(**kwargs)]])
+def get_back_keyboard(user_id):
+    return InlineKeyboardMarkup([[InlineKeyboardButton(get_trans(user_id, "btn_back"), callback_data="cmd_back")]])
 
 async def post_init(application):
-    commands = [
+    await application.bot.set_my_commands([
         BotCommand("start", "Start the bot"),
         BotCommand("menu", "Main menu"),
         BotCommand("status", "Check status"),
         BotCommand("rate", "Advertising rates"),
         BotCommand("payment", "Payment methods"),
         BotCommand("help", "Help and support")
-    ]
-    await application.bot.set_my_commands(commands)
+    ])
 
 async def is_joined(update, context):
-    user_id = update.effective_user.id
     try:
-        member = await context.bot.get_chat_member(chat_id=FORCE_CHANNEL, user_id=user_id)
+        member = await context.bot.get_chat_member(chat_id=FORCE_CHANNEL, user_id=update.effective_user.id)
         return member.status in ["member", "administrator", "creator"]
-    except Exception as e:
-        print("Force Join Error:", e)
+    except Exception:
         return True
 
 async def show_force_join(update, context):
-    user_id = update.effective_user.id
-    lang = get_user_language(user_id)
-
-    if lang == "en":
-        text = '🔒 <b>You must join the channel below to use the bot!</b>'
-        btn_join_text = "Join Channel"
-        btn_joined_text = "I've Joined"
-    elif lang == "ar":
-        text = '🔒 <b>يجب عليك الاشتراك في القناة أدناه لاستخدام البوت!</b>'
-        btn_join_text = "انضمام للقناة"
-        btn_joined_text = "تم الانضمام"
-    else:
-        text = '🔒 <b>ቦቱን ለመጠቀም ከታች ያለውን ቻናል መቀላቀል አለብዎት!</b>'
-        btn_join_text = "Join Channel"
-        btn_joined_text = "I've Joined"
-
     keyboard = [
-        [InlineKeyboardButton(text=f"📢 {btn_join_text}", url=FORCE_CHANNEL_LINK)],
-        [InlineKeyboardButton(text=f"✅ {btn_joined_text}", callback_data="check_join")]
+        [InlineKeyboardButton("📢 Join Channel", url=FORCE_CHANNEL_LINK)],
+        [InlineKeyboardButton("✅ I've Joined", callback_data="check_join")]
     ]
-    await update.message.reply_text(text=text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="HTML")
-
-async def send_main_menu(chat_id, context, user_id):
-    bot_username = get_bot_username(context)
-    text = get_trans(user_id, "welcome")
-    try:
-        await context.bot.send_message(
-            chat_id=chat_id,
-            text=text,
-            reply_markup=get_main_menu_keyboard(bot_username, user_id, use_custom_emoji=True),
-            parse_mode="HTML"
-        )
-    except Exception:
-        await context.bot.send_message(
-            chat_id=chat_id,
-            text=text,
-            reply_markup=get_main_menu_keyboard(bot_username, user_id, use_custom_emoji=False),
-            parse_mode="HTML"
-        )
+    await update.message.reply_text("🔒 <b>Please join our channel first!</b>", reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="HTML")
 
 # ============================================================
 # COMMAND HANDLERS
@@ -366,35 +254,17 @@ async def start(update, context):
     user_id = update.effective_user.id
     record_user_activity(user_id)
 
-    setup_keyboard = ReplyKeyboardMarkup([["🏠 Menu"]], resize_keyboard=True, input_field_placeholder="Send link 🔗")
-    user_lang = get_user_language(user_id)
-
-    if not user_lang:
-        await update.message.reply_text(
-            "<b>Please select your language / እባክዎ ቋንቋ ይምረጡ / اختر لغتك፦</b>",
-            reply_markup=get_language_keyboard(),
-            parse_mode="HTML"
-        )
+    if not get_user_language(user_id):
+        await update.message.reply_text("<b>Please select your language / ቋንቋ ይምረጡ:</b>", reply_markup=get_language_keyboard(), parse_mode="HTML")
         return
 
-    await update.message.reply_text("🏠", reply_markup=setup_keyboard)
-    await send_main_menu(update.effective_chat.id, context, user_id)
-
-async def status_command(update, context):
-    if not update.message:
-        return
-    user = update.effective_user
-    record_user_activity(user.id)
-    total_users, user_msg_count = get_user_stats(user.id)
-    username_text = f"@{user.username}" if user.username else "የለውም"
-
-    msg = (
-        f'👤 <b>Username:</b> {username_text}\n'
-        f'🆔 <b>ID:</b> <code>{user.id}</code>\n\n'
-        f'💬 <b>Your Messages:</b> {user_msg_count}\n'
-        f'👥 <b>Bot Users:</b> {total_users}\n'
+    await update.message.reply_text("🏠", reply_markup=ReplyKeyboardMarkup([["🏠 Menu"]], resize_keyboard=True))
+    await context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text=get_trans(user_id, "welcome"),
+        reply_markup=get_main_menu_keyboard(get_bot_username(context), user_id),
+        parse_mode="HTML"
     )
-    await update.message.reply_text(msg, parse_mode="HTML")
 
 async def rates_command(update, context):
     if update.message:
@@ -408,328 +278,182 @@ async def help_command(update, context):
     if update.message:
         await update.message.reply_text(get_trans(update.effective_user.id, "support"), parse_mode="HTML")
 
+async def status_command(update, context):
+    if not update.message:
+        return
+    user = update.effective_user
+    total_users, user_msg_count = get_user_stats(user.id)
+    msg = f"👤 <b>Username:</b> @{user.username or 'None'}\n🆔 <b>ID:</b> <code>{user.id}</code>\n💬 <b>Messages:</b> {user_msg_count}\n👥 <b>Total Users:</b> {total_users}"
+    await update.message.reply_text(msg, parse_mode="HTML")
+
 async def broadcast_command(update, context):
     if not update.message or update.effective_user.id != ADMIN_ID:
         return
-
-    reply_msg = update.message.reply_to_message
-    has_args = bool(context.args)
-
-    if not reply_msg and not has_args:
-        await update.message.reply_text("❌ Reply to a message or use:\n/broadcast your message")
-        return
-
     data = load_data()
-    success_count = 0
-    fail_count = 0
-    status_msg = await update.message.reply_text("📢 Broadcasting...")
-
-    for uid_str in data.keys():
+    count = 0
+    reply = update.message.reply_to_message
+    for uid in data.keys():
         try:
-            chat_id = int(uid_str)
-            if reply_msg:
-                await reply_msg.copy(chat_id=chat_id)
+            if reply:
+                await reply.copy(chat_id=int(uid))
             else:
-                await context.bot.send_message(chat_id=chat_id, text=" ".join(context.args), parse_mode="HTML")
-            success_count += 1
+                await context.bot.send_message(chat_id=int(uid), text=" ".join(context.args))
+            count += 1
             await asyncio.sleep(0.05)
         except Exception:
-            fail_count += 1
-
-    await status_msg.edit_text(f"✅ Broadcast done.\nSuccessful: {success_count}\nFailed: {fail_count}")
-
-# ============================================================
-# VIDEO TO AUDIO CONVERTER
-# ============================================================
-
-async def convert_video_to_audio(update, context):
-    if not update.message:
-        return
-
-    user_id = update.effective_user.id
-    record_user_activity(user_id)
-
-    if not await is_joined(update, context):
-        await show_force_join(update, context)
-        return
-
-    video = update.message.video or update.message.video_note
-    if not video and update.message.document and update.message.document.mime_type and update.message.document.mime_type.startswith("video/"):
-        video = update.message.document
-
-    if not video:
-        return
-
-    file_id = update.message.message_id
-    input_path = f"input_vid_{user_id}_{file_id}.mp4"
-    output_path = f"output_aud_{user_id}_{file_id}.mp3"
-    status_msg = None
-
-    try:
-        await context.bot.send_chat_action(chat_id=update.effective_chat.id, action=ChatAction.RECORD_VOICE)
-        status_msg = await update.message.reply_text(get_trans(user_id, "loading"), parse_mode="HTML")
-
-        tg_file = await video.get_file()
-        await tg_file.download_to_drive(input_path)
-
-        ffmpeg_bin = FFMPEG_PATH if FFMPEG_PATH else "ffmpeg"
-        cmd = [ffmpeg_bin, "-y", "-i", input_path, "-vn", "-acodec", "libmp3lame", "-q:a", "2", output_path]
-        result = await asyncio.to_thread(subprocess.run, cmd, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True, timeout=300)
-
-        if result.returncode != 0 or not os.path.exists(output_path):
-            raise RuntimeError("FFmpeg error")
-
-        bot_username = get_bot_username(context)
-        with open(output_path, "rb") as audio_file:
-            await update.message.reply_audio(
-                audio=audio_file,
-                caption=get_trans(user_id, "video_converted").format(bot_username=bot_username),
-                parse_mode="HTML"
-            )
-
-        if status_msg:
-            await status_msg.delete()
-
-    except Exception as e:
-        print("Video to Audio Error:", e)
-        if status_msg:
-            await status_msg.edit_text(get_trans(user_id, "fail_download"), parse_mode="HTML")
-    finally:
-        for path in [input_path, output_path]:
-            if os.path.exists(path):
-                try:
-                    os.remove(path)
-                except Exception:
-                    pass
+            pass
+    await update.message.reply_text(f"✅ Broadcast sent to {count} users.")
 
 # ============================================================
-# MODERN URL DOWNLOAD ENGINE (POWERFUL YOUTUBE BYPASS)
+# ROBUST DOWNLOAD ENGINE
 # ============================================================
 
-def unshorten_url(url: str) -> str:
-    try:
-        session = requests.Session()
-        session.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
-        resp = session.head(url, allow_redirects=True, timeout=10)
-        return resp.url
-    except Exception:
-        return url
-
-def clean_url(raw_url: str) -> str:
-    url = unshorten_url(raw_url)
-    url = re.sub(r'(\?|&)si=[^&]+', '', url)
+def clean_target_url(raw_url: str) -> str:
+    url = re.sub(r'(\?|&)si=[^&]+', '', raw_url)
     url = re.sub(r'(\?|&)feature=[^&]+', '', url)
-    
-    shorts_match = re.search(r'youtube\.com/shorts/([a-zA-Z0-9_-]+)', url)
-    if shorts_match:
-        video_id = shorts_match.group(1)
-        return f"https://www.youtube.com/watch?v={video_id}"
+    shorts = re.search(r'youtube\.com/shorts/([a-zA-Z0-9_-]+)', url)
+    if shorts:
+        return f"https://www.youtube.com/watch?v={shorts.group(1)}"
     return url
 
-def get_video_options(url: str, output_template: str, client_mode: str = "tv"):
-    is_youtube = any(domain in url.lower() for domain in ["youtube.com", "youtu.be"])
+def download_via_cobalt(url: str, output_path: str) -> bool:
+    """Alternative API that completely bypasses YouTube Datacenter bot-check."""
+    try:
+        api_endpoints = [
+            "https://api.cobalt.tools/api/json",
+            "https://cobalt-api.kwiatekm.tokyo/api/json"
+        ]
+        headers = {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "User-Agent": "Mozilla/5.0"
+        }
+        payload = {
+            "url": url,
+            "vQuality": "720",
+            "filenamePattern": "basic"
+        }
 
+        for ep in api_endpoints:
+            try:
+                res = requests.post(ep, json=payload, headers=headers, timeout=15)
+                data = res.json()
+                video_url = data.get("url")
+                if video_url:
+                    r = requests.get(video_url, stream=True, timeout=60)
+                    if r.status_code == 200:
+                        with open(output_path, "wb") as f:
+                            for chunk in r.iter_content(chunk_size=1024 * 1024):
+                                if chunk:
+                                    f.write(chunk)
+                        if os.path.exists(output_path) and os.path.getsize(output_path) > 1000:
+                            return True
+            except Exception:
+                continue
+    except Exception as e:
+        print("Cobalt fallback failed:", e)
+    return False
+
+def download_via_ytdlp(url: str, output_template: str):
     opts = {
         'quiet': True,
         'no_warnings': True,
         'nocheckcertificate': True,
-        'geo_bypass': True,
-        'concurrent_fragment_downloads': 5,
         'outtmpl': output_template,
         'writethumbnail': True,
-        'merge_output_format': 'mp4',
-        'http_headers': {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
-            'Accept-Language': 'en-US,en;q=0.9',
-        }
+        'format': 'best[ext=mp4][filesize<50M]/best[filesize<50M]/best',
+        'merge_output_format': 'mp4'
     }
-
-    if is_youtube:
-        if client_mode == "tv":
-            # TV & Web Embedded clients bypass datacenter IP bot detection
-            opts['format'] = 'best[ext=mp4][filesize<50M]/best[filesize<50M]/best'
-            opts['extractor_args'] = {
-                'youtube': {
-                    'player_client': ['tv_embedded', 'tv', 'web_embedded'],
-                    'player_skip': ['configs', 'webpage']
-                }
-            }
-        elif client_mode == "android":
-            # Mobile Android client fallback
-            opts['format'] = 'bestvideo[ext=mp4][filesize<45M]+bestaudio[ext=m4a]/best[ext=mp4][filesize<50M]/best[filesize<50M]/best'
-            opts['extractor_args'] = {
-                'youtube': {
-                    'player_client': ['android', 'ios'],
-                    'player_skip': ['configs', 'webpage']
-                }
-            }
-        else:
-            # mweb fallback
-            opts['format'] = 'b/bv*+ba/best'
-            opts['extractor_args'] = {
-                'youtube': {
-                    'player_client': ['mweb', 'android_creator']
-                }
-            }
-    else:
-        opts['format'] = 'best[filesize<50M]/bestvideo+bestaudio/best'
-
-    if "likee" in url or "likee.video" in url:
-        opts['http_headers']['Referer'] = 'https://likee.video/'
-    elif "vimeo.com" in url:
-        opts['http_headers']['Referer'] = 'https://vimeo.com/'
-
-    if os.path.exists('cookies.txt') and os.path.getsize('cookies.txt') > 50:
-        opts['cookiefile'] = 'cookies.txt'
-
-    return opts
-
-def download_media_func(url: str, output_template: str, mode: str):
-    with yt_dlp.YoutubeDL(get_video_options(url, output_template, mode)) as ydl:
+    with yt_dlp.YoutubeDL(opts) as ydl:
         ydl.download([url])
-
-def find_downloaded_file(prefix: str):
-    video_file = None
-    thumb_file = None
-    for f in os.listdir('.'):
-        if f.startswith(prefix) and not f.endswith(('.part', '.ytdl', '.temp')):
-            ext = os.path.splitext(f)[1].lower()
-            if ext in ['.jpg', '.jpeg', '.png', '.webp']:
-                thumb_file = f
-            elif ext in ['.mp4', '.mkv', '.webm', '.mov', '.avi']:
-                video_file = f
-    return video_file, thumb_file
 
 async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE, raw_url: str):
     chat_id = update.effective_chat.id
     user_id = update.effective_user.id
+    bot_username = get_bot_username(context)
 
     await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_DOCUMENT)
     status_msg = await update.message.reply_text(get_trans(user_id, "loading"), parse_mode="HTML")
 
-    bot_username = get_bot_username(context)
-    share_url = f"https://t.me/share/url?url=https://t.me/{bot_username}?start=share&text=Try%20this%20awesome%20Downloader%20Bot!🔥"
-    reply_markup_share = InlineKeyboardMarkup([[InlineKeyboardButton("🔗 Share Bot 🚀", url=share_url)]])
+    clean_url = clean_target_url(raw_url)
+    prefix = f"media_{user_id}_{update.message.message_id}"
+    video_out = f"{prefix}.mp4"
+    audio_out = f"audio_{user_id}_{update.message.message_id}.mp3"
+    thumb_out = f"{prefix}.jpg"
 
-    url = clean_url(raw_url)
+    downloaded = False
 
-    # Direct Pinterest Image
-    if "pinterest.com" in url or "pin.it" in url:
+    # 1. YouTube specific: Try Cobalt API first to avoid 152-18 Bot Detection
+    if any(d in clean_url.lower() for d in ["youtube.com", "youtu.be"]):
+        downloaded = await asyncio.to_thread(download_via_cobalt, clean_url, video_out)
+
+    # 2. If not YouTube or Cobalt failed, fallback to yt-dlp
+    if not downloaded:
         try:
-            res = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'}, timeout=10)
-            img_matches = re.findall(r'https://i\.pinimg\.com/(?:originals|736x)/[^\s"\'\>]+\.(?:jpg|png|jpeg|webp)', res.text)
-            if img_matches:
-                await update.message.reply_photo(
-                    photo=img_matches[0],
-                    caption=get_trans(user_id, "photo_download").format(bot_username=bot_username),
-                    reply_markup=reply_markup_share,
-                    parse_mode="HTML"
-                )
-                await status_msg.delete()
-                return
-        except Exception:
-            pass
+            await asyncio.to_thread(download_via_ytdlp, clean_url, f"{prefix}.%(ext)s")
+            for f in os.listdir('.'):
+                if f.startswith(prefix) and not f.endswith(('.part', '.temp')):
+                    ext = os.path.splitext(f)[1].lower()
+                    if ext in ['.mp4', '.mkv', '.webm']:
+                        video_out = f
+                        downloaded = True
+                    elif ext in ['.jpg', '.jpeg', '.webp']:
+                        thumb_out = f
+        except Exception as e:
+            print("yt-dlp general error:", e)
 
-    media_prefix = f"media_{user_id}_{update.message.message_id}"
-    media_template = f"{media_prefix}.%(ext)s"
+    # Check and Send Output
     sent_any = False
+    ffmpeg_bin = FFMPEG_PATH or "ffmpeg"
 
-    try:
-        # Multi-client fallback attempt for datacenter bot bypass
-        download_success = False
-        for client_mode in ["tv", "android", "mweb"]:
+    if os.path.exists(video_out) and os.path.getsize(video_out) > 0:
+        # Generate thumbnail from video if not already present
+        if not os.path.exists(thumb_out):
+            thumb_gen = f"{prefix}_thumb.jpg"
+            subprocess.run([ffmpeg_bin, "-y", "-ss", "00:00:01", "-i", video_out, "-vframes", "1", thumb_gen], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            if os.path.exists(thumb_gen):
+                thumb_out = thumb_gen
+
+        # Send Thumbnail
+        if os.path.exists(thumb_out):
             try:
-                await asyncio.to_thread(download_media_func, url, media_template, client_mode)
-                v_test, t_test = find_downloaded_file(media_prefix)
-                if v_test or t_test:
-                    download_success = True
-                    break
-            except Exception as d_err:
-                print(f"Attempt with {client_mode} failed: {d_err}")
-                continue
+                with open(thumb_out, "rb") as tf:
+                    await update.message.reply_photo(photo=tf, caption=get_trans(user_id, "photo_download").format(bot_username=bot_username), parse_mode="HTML")
+            except Exception:
+                pass
 
-        actual_video, actual_thumb = find_downloaded_file(media_prefix)
-
-        # 1. SEND THUMBNAIL (Converted to JPG if WebP)
-        if actual_thumb and os.path.exists(actual_thumb):
-            clean_thumb = actual_thumb
+        # Send Video
+        if os.path.getsize(video_out) <= 50 * 1024 * 1024:
             try:
-                if actual_thumb.lower().endswith(".webp"):
-                    clean_thumb = f"{media_prefix}_thumb.jpg"
-                    ffmpeg_bin = FFMPEG_PATH if FFMPEG_PATH else "ffmpeg"
-                    await asyncio.to_thread(subprocess.run, [ffmpeg_bin, "-y", "-i", actual_thumb, clean_thumb], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                with open(video_out, "rb") as vf:
+                    await update.message.reply_video(
+                        video=vf,
+                        caption=f"🚀 <b>Downloaded with</b> @{bot_username} & @mame_posts\n\n✅ <b>Enjoy!</b>",
+                        parse_mode="HTML",
+                        supports_streaming=True
+                    )
+                sent_any = True
+            except Exception:
+                with open(video_out, "rb") as vf:
+                    await update.message.reply_document(document=vf, caption=f"🚀 @{bot_username}", parse_mode="HTML")
+                sent_any = True
 
-                if os.path.exists(clean_thumb):
-                    with open(clean_thumb, 'rb') as tf:
-                        await update.message.reply_photo(
-                            photo=tf,
-                            caption=get_trans(user_id, "photo_download").format(bot_username=bot_username),
-                            reply_markup=reply_markup_share,
-                            parse_mode="HTML"
-                        )
-                    sent_any = True
-            except Exception as te:
-                print("Thumbnail send failed:", te)
+            # Extract and Send Audio
+            subprocess.run([ffmpeg_bin, "-y", "-i", video_out, "-vn", "-acodec", "libmp3lame", "-q:a", "2", audio_out], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            if os.path.exists(audio_out) and os.path.getsize(audio_out) > 0:
+                with open(audio_out, "rb") as af:
+                    await update.message.reply_audio(audio=af, caption=f"🎧 <b>Extracted Audio</b>\n\n✅ @{bot_username}", parse_mode="HTML")
+        else:
+            await status_msg.edit_text(get_trans(user_id, "size_limit"), parse_mode="HTML")
+            return
 
-        # 2. SEND VIDEO
-        if actual_video and os.path.exists(actual_video):
-            if os.path.getsize(actual_video) <= 50 * 1024 * 1024:
-                await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_VIDEO)
-                try:
-                    with open(actual_video, 'rb') as vf:
-                        await update.message.reply_video(
-                            video=vf,
-                            caption=f'🚀 <b>Downloaded with</b> @{bot_username} & @mame_posts\n\n✅ <b>Enjoy!</b>',
-                            reply_markup=reply_markup_share,
-                            parse_mode="HTML",
-                            supports_streaming=True
-                        )
-                    sent_any = True
-                except Exception as vid_err:
-                    print("reply_video failed, document fallback:", vid_err)
-                    with open(actual_video, 'rb') as doc_file:
-                        await update.message.reply_document(
-                            document=doc_file,
-                            caption=f'🚀 <b>Downloaded with</b> @{bot_username} & @mame_posts',
-                            reply_markup=reply_markup_share,
-                            parse_mode="HTML"
-                        )
-                    sent_any = True
-
-                # 3. EXTRACT & SEND AUDIO (MP3)
-                audio_output = f"audio_{user_id}_{update.message.message_id}.mp3"
-                ffmpeg_bin = FFMPEG_PATH if FFMPEG_PATH else "ffmpeg"
-                cmd = [ffmpeg_bin, "-y", "-i", actual_video, "-vn", "-acodec", "libmp3lame", "-q:a", "2", audio_output]
-                await asyncio.to_thread(subprocess.run, cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
-                if os.path.exists(audio_output) and os.path.getsize(audio_output) > 0:
-                    await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.RECORD_VOICE)
-                    with open(audio_output, 'rb') as af:
-                        await update.message.reply_audio(
-                            audio=af,
-                            caption=f'🎧 <b>Extracted Audio / BGM (MP3)</b>\n\n✅ <b>Downloaded with</b> @{bot_username}',
-                            reply_markup=reply_markup_share,
-                            parse_mode="HTML"
-                        )
-                    try:
-                        os.remove(audio_output)
-                    except Exception:
-                        pass
-                    sent_any = True
-            else:
-                await status_msg.edit_text(get_trans(user_id, "size_limit"), parse_mode="HTML")
-                return
-
-    except Exception as e:
-        print("Media Engine Error:", e)
-
-    finally:
-        for f in os.listdir('.'):
-            if f.startswith(media_prefix):
-                try:
-                    os.remove(f)
-                except Exception:
-                    pass
+    # Clean Up Files
+    for f in os.listdir('.'):
+        if f.startswith(prefix) or f.startswith(f"audio_{user_id}_{update.message.message_id}"):
+            try:
+                os.remove(f)
+            except Exception:
+                pass
 
     if sent_any:
         try:
@@ -743,7 +467,7 @@ async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE
             pass
 
 # ============================================================
-# CALLBACK & USER HANDLERS
+# CALLBACKS & MESSAGES
 # ============================================================
 
 async def button_callback(update, context):
@@ -753,8 +477,7 @@ async def button_callback(update, context):
     bot_username = get_bot_username(context)
 
     if data.startswith("lang_"):
-        lang_code = data.split("_", 1)[1]
-        set_user_language(user_id, lang_code)
+        set_user_language(user_id, data.split("_", 1)[1])
         await query.answer()
         try:
             await query.message.delete()
@@ -766,123 +489,104 @@ async def button_callback(update, context):
             reply_markup=ReplyKeyboardMarkup([["🏠 Menu"]], resize_keyboard=True),
             parse_mode="HTML"
         )
-        await send_main_menu(user_id, context, user_id)
+        await context.bot.send_message(
+            chat_id=user_id,
+            text=get_trans(user_id, "welcome"),
+            reply_markup=get_main_menu_keyboard(bot_username, user_id),
+            parse_mode="HTML"
+        )
         return
 
     if data == "cmd_change_lang":
         await query.answer()
-        await query.edit_message_text("<b>Please select your language / ቋንቋ ይምረጡ:</b>", reply_markup=get_language_keyboard(), parse_mode="HTML")
+        await query.edit_message_text("<b>Select language:</b>", reply_markup=get_language_keyboard(), parse_mode="HTML")
         return
 
     if data == "cmd_back":
         await query.answer()
-        await query.edit_message_text(get_trans(user_id, "welcome"), reply_markup=get_main_menu_keyboard(bot_username, user_id, False), parse_mode="HTML")
+        await query.edit_message_text(get_trans(user_id, "welcome"), reply_markup=get_main_menu_keyboard(bot_username, user_id), parse_mode="HTML")
         return
 
-    for key_cmd in ["price", "order", "payment", "support"]:
-        if data == f"cmd_{key_cmd}":
+    for k in ["price", "order", "payment", "support"]:
+        if data == f"cmd_{k}":
             await query.answer()
-            await query.edit_message_text(get_trans(user_id, key_cmd), reply_markup=get_back_keyboard(user_id, False), parse_mode="HTML")
+            await query.edit_message_text(get_trans(user_id, k), reply_markup=get_back_keyboard(user_id), parse_mode="HTML")
             return
 
     if data == "cmd_status":
         await query.answer()
-        total_users, user_msg_count = get_user_stats(user_id)
-        msg = f'👤 <b>Username:</b> @{query.from_user.username}\n🆔 <b>ID:</b> <code>{user_id}</code>\n💬 <b>Messages:</b> {user_msg_count}\n👥 <b>Users:</b> {total_users}'
-        await query.edit_message_text(msg, reply_markup=get_back_keyboard(user_id, False), parse_mode="HTML")
+        total, count = get_user_stats(user_id)
+        msg = f"👤 @{query.from_user.username or 'None'}\n🆔 <code>{user_id}</code>\n💬 Messages: {count}\n👥 Users: {total}"
+        await query.edit_message_text(msg, reply_markup=get_back_keyboard(user_id), parse_mode="HTML")
         return
 
 async def check_join(update, context):
     query = update.callback_query
-    user_id = query.from_user.id
-    try:
-        member = await context.bot.get_chat_member(chat_id=FORCE_CHANNEL, user_id=user_id)
-        if member.status in ["member", "administrator", "creator"]:
-            await query.answer()
-            await query.edit_message_text("✅ <b>አሁን ቻናሉን ተቀላቅለዋል።</b>\n\nሊንኩን ደግመው ይላኩ።", parse_mode="HTML")
-        else:
-            await query.answer("❌ እባክዎ መጀመሪያ Channel ይቀላቀሉ!", show_alert=True)
-    except Exception:
-        await query.answer("⚠️ Membership error", show_alert=True)
+    if await is_joined(update, context):
+        await query.answer()
+        await query.edit_message_text("✅ <b>Joined! Resend your link.</b>", parse_mode="HTML")
+    else:
+        await query.answer("❌ Join the channel first!", show_alert=True)
 
-SUPPORTED_DOMAINS = [
-    "youtube.com", "youtu.be", "tiktok.com", "likee.video", "likee.com",
-    "pinterest.com", "pin.it", "instagram.com", "twitter.com", "x.com",
-    "facebook.com", "fb.watch", "reddit.com", "redd.it", "twitch.tv",
-    "vimeo.com", "vk.com", "ok.ru", "tumblr.com", "soundcloud.com", "threads.net"
-]
+SUPPORTED = ["youtube.com", "youtu.be", "tiktok.com", "instagram.com", "twitter.com", "x.com", "facebook.com", "reddit.com", "pinterest.com", "pin.it"]
 
 async def handle_user_messages(update, context):
     if not update.message:
         return
-
     user_id = update.effective_user.id
     record_user_activity(user_id)
 
-    if update.message.video or update.message.video_note or (update.message.document and update.message.document.mime_type and update.message.document.mime_type.startswith("video/")):
-        await convert_video_to_audio(update, context)
-        return
-
     text = update.message.text or update.message.caption or ""
-
     if text.strip() == "🏠 Menu":
-        await send_main_menu(update.effective_chat.id, context, user_id)
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text=get_trans(user_id, "welcome"),
+            reply_markup=get_main_menu_keyboard(get_bot_username(context), user_id),
+            parse_mode="HTML"
+        )
         return
 
-    is_supported_link = any(domain in text.lower() for domain in SUPPORTED_DOMAINS)
-
-    if is_supported_link:
+    if any(d in text.lower() for d in SUPPORTED):
         if not await is_joined(update, context):
             await show_force_join(update, context)
             return
-
-        url_match = re.search(r"https?://[^\s]+", text)
-        target_url = url_match.group(0).rstrip(".,!?)]}") if url_match else text.strip()
-        await handle_url_download(update, context, target_url)
+        m = re.search(r"https?://[^\s]+", text)
+        target = m.group(0).rstrip(".,!?)]}") if m else text.strip()
+        await handle_url_download(update, context, target)
         return
 
-    # Forward to admin
+    # Forward other messages to Admin
     try:
-        header_text = f"📩 <b>New User Message</b>\n👤 Name: {update.effective_user.full_name}\n🆔 ID: <code>{user_id}</code>"
-        header_msg = await context.bot.send_message(chat_id=ADMIN_ID, text=header_text, parse_mode="HTML")
-        forwarded_msg = await update.message.forward(chat_id=ADMIN_ID)
+        header = f"📩 <b>New User Message</b>\n👤 Name: {update.effective_user.full_name}\n🆔 ID: <code>{user_id}</code>"
+        h_msg = await context.bot.send_message(chat_id=ADMIN_ID, text=header, parse_mode="HTML")
+        f_msg = await update.message.forward(chat_id=ADMIN_ID)
         if "user_mapping" not in context.bot_data:
             context.bot_data["user_mapping"] = {}
-        context.bot_data["user_mapping"][str(header_msg.message_id)] = user_id
-        context.bot_data["user_mapping"][str(forwarded_msg.message_id)] = user_id
+        context.bot_data["user_mapping"][str(h_msg.message_id)] = user_id
+        context.bot_data["user_mapping"][str(f_msg.message_id)] = user_id
         await update.message.reply_text("✅ መልዕክትዎ ተቀብለናል።")
-    except Exception as e:
-        print("Admin forward error:", e)
+    except Exception:
+        pass
 
 async def admin_reply(update, context):
     if not update.message or update.effective_user.id != ADMIN_ID:
         return
-    replied_msg = update.message.reply_to_message
-    if not replied_msg:
+    r_msg = update.message.reply_to_message
+    if not r_msg:
         return
-
-    user_mapping = context.bot_data.get("user_mapping", {})
-    target_user_id = user_mapping.get(str(replied_msg.message_id))
-
-    if not target_user_id and replied_msg.forward_from:
-        target_user_id = replied_msg.forward_from.id
-
-    if not target_user_id and replied_msg.text and "🆔 ID:" in replied_msg.text:
-        match = re.search(r"🆔 ID:\s*<code>(\d+)</code>", replied_msg.text)
-        if match:
-            target_user_id = int(match.group(1))
-
-    if target_user_id:
+    mapping = context.bot_data.get("user_mapping", {})
+    uid = mapping.get(str(r_msg.message_id))
+    if uid:
         try:
-            await update.message.copy(chat_id=target_user_id)
-            await update.message.reply_text("✅ Reply sent to the user.")
+            await update.message.copy(chat_id=uid)
+            await update.message.reply_text("✅ Sent.")
         except Exception as e:
-            await update.message.reply_text(f"❌ Could not send reply.\n{e}")
-    else:
-        await update.message.reply_text("❌ User ID not found.")
+            await update.message.reply_text(f"❌ Failed: {e}")
 
 async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE):
-    print("❌ ERROR:", context.error)
+    # Ignore polling conflict in console to prevent spamming
+    if "Conflict: terminated by other getUpdates request" not in str(context.error):
+        print("❌ ERROR:", context.error)
 
 # ============================================================
 # MAIN
@@ -890,7 +594,7 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE):
 
 def main():
     if not TOKEN:
-        raise RuntimeError("❌ BOT_TOKEN environment variable is missing!")
+        raise RuntimeError("BOT_TOKEN is missing!")
 
     keep_alive()
 
@@ -916,16 +620,7 @@ def main():
     admin_filter = filters.User(user_id=ADMIN_ID) & filters.REPLY & ~filters.COMMAND
     application.add_handler(MessageHandler(admin_filter, admin_reply))
 
-    application.add_handler(MessageHandler(filters.VIDEO | filters.VIDEO_NOTE, convert_video_to_audio))
-
-    type_filter = (
-        filters.TEXT
-        | filters.PHOTO
-        | filters.Document.ALL
-        | filters.VOICE
-        | filters.AUDIO
-        | filters.Sticker.ALL
-    ) & ~filters.COMMAND
+    type_filter = (filters.TEXT | filters.PHOTO | filters.Document.ALL | filters.VOICE | filters.AUDIO | filters.Sticker.ALL) & ~filters.COMMAND
     application.add_handler(MessageHandler(type_filter, handle_user_messages))
 
     application.add_error_handler(error_handler)
