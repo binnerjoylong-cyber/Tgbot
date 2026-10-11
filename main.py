@@ -39,16 +39,39 @@ from telegram.ext import (
 import yt_dlp
 
 # ============================================================
-# CREATE COOKIES FILE FROM RENDER ENVIRONMENT VARIABLE
+# CREATE & SANITIZE NETSCAPE COOKIES FILE
 # ============================================================
+
+def sanitize_and_write_cookies(raw_text: str, file_path="cookies.txt"):
+    """Fixes space-separated cookies and writes tab-separated Netscape format."""
+    lines = raw_text.replace("\\n", "\n").splitlines()
+    cleaned_lines = ["# Netscape HTTP Cookie File\n"]
+    for line in lines:
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        parts = line.split()
+        if len(parts) >= 7:
+            # Domain, flag, path, secure, expiration, name, value
+            domain, flag, path, secure, expiry, name = parts[:6]
+            value = " ".join(parts[6:])
+            cleaned_lines.append(f"{domain}\t{flag}\t{path}\t{secure}\t{expiry}\t{name}\t{value}\n")
+    
+    with open(file_path, "w", encoding="utf-8") as f:
+        f.writelines(cleaned_lines)
+    print("✅ cookies.txt formatted with valid TAB separators!")
 
 COOKIES_ENV = os.environ.get("YOUTUBE_COOKIES")
 
 if COOKIES_ENV:
-    formatted_cookies = COOKIES_ENV.replace("\\n", "\n")
-    with open("cookies.txt", "w", encoding="utf-8") as f:
-        f.write(formatted_cookies)
-    print("✅ cookies.txt file created successfully from Environment Variable!")
+    sanitize_and_write_cookies(COOKIES_ENV)
+elif os.path.exists("cookies.txt"):
+    try:
+        with open("cookies.txt", "r", encoding="utf-8") as f:
+            content = f.read()
+        sanitize_and_write_cookies(content)
+    except Exception as e:
+        print("Cookie sanitize warning:", e)
 
 # ============================================================
 # FLASK WEB SERVER (KEEP ALIVE)
@@ -613,17 +636,17 @@ def unshorten_url(url: str) -> str:
 
 def clean_url(raw_url: str) -> str:
     url = unshorten_url(raw_url)
-    
+
     # Strip tracking parameters (?si=..., ?feature=...)
     url = re.sub(r'(\?|&)si=[^&]+', '', url)
     url = re.sub(r'(\?|&)feature=[^&]+', '', url)
-    
+
     # Convert YouTube Shorts directly to standard watch link
     shorts_match = re.search(r'youtube\.com/shorts/([a-zA-Z0-9_-]+)', url)
     if shorts_match:
         video_id = shorts_match.group(1)
         return f"https://www.youtube.com/watch?v={video_id}"
-        
+
     return url
 
 def get_video_options(url: str, output_template: str, fallback: bool = False):
@@ -636,11 +659,10 @@ def get_video_options(url: str, output_template: str, fallback: bool = False):
         'geo_bypass': True,
         'concurrent_fragment_downloads': 5,
         'outtmpl': output_template,
-        'writethumbnail': True,  # Download Thumbnail cover automatically
+        'writethumbnail': True,
         'merge_output_format': 'mp4',
         'http_headers': {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36',
             'Accept-Language': 'en-US,en;q=0.9',
         }
     }
@@ -650,14 +672,16 @@ def get_video_options(url: str, output_template: str, fallback: bool = False):
             opts['format'] = 'best[ext=mp4][filesize<50M]/best[filesize<50M]/best'
             opts['extractor_args'] = {
                 'youtube': {
-                    'player_client': ['android', 'ios']
+                    'player_client': ['ios', 'android'],
+                    'player_skip': ['configs', 'webpage']
                 }
             }
         else:
             opts['format'] = 'bestvideo[ext=mp4][filesize<45M]+bestaudio[ext=m4a]/best[ext=mp4][filesize<50M]/best[filesize<50M]/best'
             opts['extractor_args'] = {
                 'youtube': {
-                    'player_client': ['ios', 'android', 'mweb']
+                    'player_client': ['android', 'ios'],
+                    'player_skip': ['configs', 'webpage']
                 }
             }
     else:
@@ -731,7 +755,6 @@ async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE
     sent_any = False
 
     try:
-        # Download media
         try:
             await asyncio.to_thread(download_media_func, url, media_template, False)
         except Exception as err1:
@@ -740,7 +763,7 @@ async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE
 
         actual_video, actual_thumb = find_downloaded_file(media_prefix)
 
-        # 2. SEND THUMBNAIL (IF AVAILABLE)
+        # 2. SEND THUMBNAIL
         if actual_thumb and os.path.exists(actual_thumb):
             try:
                 await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_PHOTO)
@@ -780,7 +803,7 @@ async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE
                         )
                     sent_any = True
 
-                # 4. EXTRACT & SEND BACKGROUND MUSIC / AUDIO (MP3)
+                # 4. EXTRACT & SEND AUDIO (MP3)
                 audio_output = f"audio_{user_id}_{update.message.message_id}.mp3"
                 ffmpeg_bin = FFMPEG_PATH if FFMPEG_PATH else "ffmpeg"
                 cmd = [ffmpeg_bin, "-y", "-i", actual_video, "-vn", "-acodec", "libmp3lame", "-q:a", "2", audio_output]
@@ -965,7 +988,6 @@ async def handle_user_messages(update, context):
         await handle_url_download(update, context, target_url)
         return
 
-    # Forward other messages to Admin
     username = f"@{update.effective_user.username}" if update.effective_user.username else "No username"
     header_text = (
         "📩 <b>New User Message</b>\n\n"
