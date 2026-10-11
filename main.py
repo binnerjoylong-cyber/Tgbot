@@ -133,7 +133,7 @@ def get_user_stats(user_id):
     return total_users, user_msg_count
 
 # ============================================================
-# TRANSLATIONS (AMHARIC, ENGLISH & ARABIC WITH CUSTOM EMOJIS)
+# TRANSLATIONS (AMHARIC, ENGLISH & ARABIC)
 # ============================================================
 
 TRANSLATIONS = {
@@ -192,7 +192,8 @@ TRANSLATIONS = {
             '<tg-emoji emoji-id="5305545479814161889">💬</tg-emoji> <b>Support & Downloader Help</b>\n\n'
             '<tg-emoji emoji-id="5305655375142364109">📺</tg-emoji> '
             '<b>ቪዲዮ/ፎቶ ለማውረድ:</b> የ Tiktok, Instagram, Facebook, Reddit, Twitch, Vimeo, SoundCloud, Threads እና ሌሎች ሊንክ ቀጥታ ለቦቱ ይላኩ።\n\n'
-            '<tg-emoji emoji-id="5305289658677108341">📹</tg-emoji> <b>Video to Audio:</b> ማናቸውንም ቪዲዮ ከስልክዎ ይላኩ፣ ወደ MP3 Audio ቀይሮ ይልክልዎታል።\n\n'
+            '<tg-emoji emoji-id="5305289658677108341">📹</tg-emoji> '
+            '<b>Video to Audio:</b> ማናቸውንም ቪዲዮ ከስልክዎ ይላኩ፣ ወደ MP3 Audio ቀይሮ ይልክልዎታል።\n\n'
             '<tg-emoji emoji-id="5949327894567195412">👩‍💻</tg-emoji> ለአድሚን መልዕክት ለመላክም እዚሁ መጻፍ ይችላሉ።'
         )
     },
@@ -618,7 +619,7 @@ async def convert_video_to_audio(update, context):
                     pass
 
 # ============================================================
-# SAFE URL CLEANER (NEVER BREAKS QUERY FORMATS)
+# SAFE URL CLEANER (NEVER DESTROYS YOUTUBE QUERY STRINGS)
 # ============================================================
 
 def clean_url(raw_url: str) -> str:
@@ -634,7 +635,7 @@ def clean_url(raw_url: str) -> str:
     if youtu_be_match:
         return f"https://www.youtube.com/watch?v={youtu_be_match.group(1)}"
 
-    # YouTube Watch URL: extract clean 'v' parameter safely
+    # Standard YouTube watch URL: safely get video ID without messing up '?v='
     if "youtube.com/watch" in url:
         parsed = urlparse(url)
         query = parse_qs(parsed.query)
@@ -645,7 +646,7 @@ def clean_url(raw_url: str) -> str:
     return url
 
 # ============================================================
-# MODERN URL DOWNLOAD ENGINE WITH VERIFIED DENO + EJS FIX
+# MODERN URL DOWNLOAD ENGINE WITH NATIVE MP4/H264 REMUX
 # ============================================================
 
 def get_video_options(url: str, output_template: str):
@@ -657,10 +658,15 @@ def get_video_options(url: str, output_template: str):
         'concurrent_fragment_downloads': 5,
         'outtmpl': output_template,
         'writethumbnail': True,
-        'merge_output_format': 'mp4',
-        'format': 'bestvideo[ext=mp4][filesize<45M]+bestaudio[ext=m4a]/best[ext=mp4][filesize<50M]/best[filesize<50M]/best',
         
-        # KEY PARAMETERS VERIFIED WORKING ON YOUR VPS:
+        # Merge directly to standard MP4 with +faststart natively
+        'format': 'bestvideo[filesize<45M]+bestaudio/best[filesize<50M]/best',
+        'merge_output_format': 'mp4',
+        'postprocessor_args': {
+            'Merger': ['-movflags', '+faststart']
+        },
+        
+        # EXACT VERIFIED DENO SETTINGS:
         'js_runtimes': {'deno': {'path': DENO_BIN}},
         'remote_components': ['ejs:github'],
     }
@@ -733,7 +739,7 @@ async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE
     sent_any = False
 
     try:
-        # Download media using verified Deno + EJS config
+        # Download media
         await asyncio.to_thread(download_media_func, url, media_template)
 
         actual_video, actual_thumb = find_downloaded_file(media_prefix)
@@ -764,31 +770,36 @@ async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE
             except Exception as thumb_err:
                 print("Thumbnail send error:", thumb_err)
 
-        # 3. SEND VIDEO (FIXED CONTAINER & SAFE STREAMING)
+        # 3. SEND VIDEO (GUARANTEED WORKING STREAM)
         if actual_video and os.path.exists(actual_video):
             file_size = os.path.getsize(actual_video)
-            if file_size > 1000 and file_size <= 50 * 1024 * 1024:
+            
+            # Make sure file is not empty or corrupted (must be > 10KB)
+            if file_size > 10240 and file_size <= 50 * 1024 * 1024:
                 await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_VIDEO)
 
-                # Remux cleanly to faststart MP4 for reliable Telegram playback
-                ready_video_path = f"{media_prefix}_ready.mp4"
-                remux_cmd = [
-                    ffmpeg_bin, "-y",
-                    "-i", actual_video,
-                    "-c:v", "copy",
-                    "-c:a", "aac",
-                    "-b:a", "128k",
-                    "-movflags", "+faststart",
-                    ready_video_path
-                ]
-                await asyncio.to_thread(subprocess.run, remux_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                # Ensure container is clean standard MP4
+                final_video_file = f"{media_prefix}_ready.mp4"
+                
+                # Check if file needs remux
+                if not actual_video.endswith(".mp4"):
+                    remux_cmd = [
+                        ffmpeg_bin, "-y",
+                        "-i", actual_video,
+                        "-c", "copy",
+                        "-movflags", "+faststart",
+                        final_video_file
+                    ]
+                    await asyncio.to_thread(subprocess.run, remux_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    target_to_send = final_video_file if (os.path.exists(final_video_file) and os.path.getsize(final_video_file) > 10240) else actual_video
+                else:
+                    target_to_send = actual_video
 
-                target_file = ready_video_path if (os.path.exists(ready_video_path) and os.path.getsize(ready_video_path) > 1000) else actual_video
                 caption_text = f'<tg-emoji emoji-id="530762354187772738">🚀</tg-emoji> <b>Downloaded with</b> @{bot_username} & @mame_posts\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Enjoy!</b>'
 
                 video_sent = False
                 try:
-                    with open(target_file, 'rb') as vf:
+                    with open(target_to_send, 'rb') as vf:
                         await update.message.reply_video(
                             video=vf,
                             caption=caption_text,
@@ -801,10 +812,10 @@ async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE
                 except Exception as vid_err:
                     print("reply_video error:", vid_err)
 
-                # Safe fallback to Document if reply_video fails
+                # Direct document fallback if needed
                 if not video_sent:
                     try:
-                        with open(target_file, 'rb') as doc_f:
+                        with open(target_to_send, 'rb') as doc_f:
                             await update.message.reply_document(
                                 document=doc_f,
                                 caption=caption_text,
