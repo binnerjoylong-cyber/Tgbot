@@ -265,7 +265,7 @@ TRANSLATIONS = {
         "loading": '<tg-emoji emoji-id="5305254783542667121">⏳</tg-emoji> <b>جاري التحميل...</b>',
         "video_converted": '<tg-emoji emoji-id="5305534793935527938">🎵</tg-emoji> <b>الصوت المستخرج</b>\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>تم التحويل بواسطة</b> @{bot_username} & @mame_posts',
         "video_downloaded": '<tg-emoji emoji-id="530762354187772738">🚀</tg-emoji> <b>Downloaded with</b> @{bot_username} & @mame_posts\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Enjoy!</b>',
-        "size_limit": "⚠️ <b>حجم الملف أكبر من 50 ميغابايت!</b>",
+        "size_limit": "⚠️ <b>حجم الملف أكبر من 50 ميغابايት!</b>",
         "fail_download": "💔 <b>تعذر تحميل الملف! يرجى التأكد من أن الرابط عام.</b>",
         "photo_download": '📸 <b>الصورة / الصورة المصغرة المحملة</b>\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>تم التحميل بواسطة</b> @{bot_username}',
         "welcome": (
@@ -303,7 +303,7 @@ TRANSLATIONS = {
         "support": (
             '<tg-emoji emoji-id="5305545479814161889">💬</tg-emoji> <b>الدعم والمساعدة في التحميل</b>\n\n'
             '<tg-emoji emoji-id="5305655375142364109">📺</tg-emoji> '
-            '<b>لتحميل الفيديوهات/الصور:</b> أرسل روابط تيك توክ، إنستغرام، فيسبوك، ريديت، تويتش وغيرها مباشرة.\n\n'
+            '<b>لتحميل الفيديوهات/الصور:</b> أرسل روابط تيك توክ፣ إنستغرام، فيسبوك، ريديت، تويتش وغيرها مباشرة.\n\n'
             '<tg-emoji emoji-id="5305289658677108341">📹</tg-emoji> <b>تحويل الفيديو إلى صوت:</b> أرسل أي فيديو لتحويله إلى ملف صوتي MP3.\n\n'
             '<tg-emoji emoji-id="5949327894567195412">👩‍💻</tg-emoji> يمكنك كتابة رسائلك هنا للتواصل مع المسؤول مباشرة.'
         )
@@ -692,29 +692,6 @@ def find_downloaded_file(prefix: str):
                 video_file = f
     return video_file, thumb_file
 
-def get_video_metadata(video_path: str, ffmpeg_bin: str):
-    """Safely extracts width, height and duration using ffprobe for Telegram Player."""
-    try:
-        ffprobe_bin = shutil.which("ffprobe")
-        if not ffprobe_bin:
-            return None, None, None
-        cmd = [
-            ffprobe_bin,
-            "-v", "error",
-            "-show_entries", "stream=width,height:format=duration",
-            "-of", "json",
-            video_path
-        ]
-        res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, timeout=10)
-        data = json.loads(res.stdout)
-        streams = data.get("streams", [])
-        w = streams[0].get("width") if streams else None
-        h = streams[0].get("height") if streams else None
-        dur = int(float(data.get("format", {}).get("duration", 0)))
-        return w, h, dur
-    except Exception:
-        return None, None, None
-
 async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE, raw_url: str):
     chat_id = update.effective_chat.id
     user_id = update.effective_user.id
@@ -764,7 +741,6 @@ async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE
         ffmpeg_bin = FFMPEG_PATH if FFMPEG_PATH else "ffmpeg"
 
         # 2. SEND THUMBNAIL (Converted to JPG if WebP)
-        clean_thumb_path = None
         if actual_thumb and os.path.exists(actual_thumb):
             clean_thumb_path = actual_thumb
             try:
@@ -789,66 +765,58 @@ async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE
             except Exception as thumb_err:
                 print("Thumbnail send error:", thumb_err)
 
-        # 3. SEND VIDEO (BULLETPROOF REMUX TO AVOID Document_invalid)
+        # 3. SEND VIDEO (CLEAN RE-ENCODED CONTAINER TO PREVENT Document_invalid)
         if actual_video and os.path.exists(actual_video):
             file_size = os.path.getsize(actual_video)
             if file_size > 1000 and file_size <= 50 * 1024 * 1024:
                 await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_VIDEO)
 
-                # Re-mux cleanly to ensure proper moov atom and video streaming support
-                ready_video_path = f"{media_prefix}_clean.mp4"
+                # Re-mux to guaranteed Telegram MP4 format with +faststart
+                ready_video_path = f"{media_prefix}_ready.mp4"
                 remux_cmd = [
                     ffmpeg_bin, "-y",
                     "-i", actual_video,
                     "-c:v", "copy",
                     "-c:a", "aac",
+                    "-b:a", "128k",
                     "-movflags", "+faststart",
                     ready_video_path
                 ]
                 await asyncio.to_thread(subprocess.run, remux_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
                 target_file = ready_video_path if (os.path.exists(ready_video_path) and os.path.getsize(ready_video_path) > 1000) else actual_video
-                v_width, v_height, v_dur = get_video_metadata(target_file, ffmpeg_bin)
 
-                video_kwargs = {
-                    "caption": f'<tg-emoji emoji-id="530762354187772738">🚀</tg-emoji> <b>Downloaded with</b> @{bot_username} & @mame_posts\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Enjoy!</b>',
-                    "reply_markup": reply_markup_share,
-                    "parse_mode": "HTML",
-                    "supports_streaming": True
-                }
-                if v_width and v_height:
-                    video_kwargs["width"] = v_width
-                    video_kwargs["height"] = v_height
-                if v_dur:
-                    video_kwargs["duration"] = v_dur
+                caption_text = f'<tg-emoji emoji-id="530762354187772738">🚀</tg-emoji> <b>Downloaded with</b> @{bot_username} & @mame_posts\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Enjoy!</b>'
 
+                # Safe binary stream delivery
                 video_sent = False
                 try:
                     with open(target_file, 'rb') as vf:
                         await update.message.reply_video(
                             video=vf,
-                            filename=f"video_{update.message.message_id}.mp4",
-                            **video_kwargs
+                            caption=caption_text,
+                            reply_markup=reply_markup_share,
+                            parse_mode="HTML",
+                            supports_streaming=True
                         )
                     video_sent = True
                     sent_any = True
                 except Exception as vid_err:
-                    print("reply_video direct upload failed:", vid_err)
+                    print("reply_video raw error:", vid_err)
 
-                # Safe fallback to Document (with explicit filename & binary reading)
+                # If reply_video rejected, send cleanly as MP4 Document
                 if not video_sent:
                     try:
                         with open(target_file, 'rb') as doc_f:
                             await update.message.reply_document(
                                 document=doc_f,
-                                filename=f"video_{update.message.message_id}.mp4",
-                                caption=f'<tg-emoji emoji-id="530762354187772738">🚀</tg-emoji> <b>Downloaded with</b> @{bot_username} & @mame_posts',
+                                caption=caption_text,
                                 reply_markup=reply_markup_share,
                                 parse_mode="HTML"
                             )
                         sent_any = True
                     except Exception as doc_err:
-                        print("Document safe fallback error:", doc_err)
+                        print("reply_document raw error:", doc_err)
 
                 # 4. EXTRACT & SEND AUDIO (MP3)
                 audio_output = f"audio_{user_id}_{update.message.message_id}.mp3"
@@ -860,7 +828,6 @@ async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE
                     with open(audio_output, 'rb') as af:
                         await update.message.reply_audio(
                             audio=af,
-                            filename=f"audio_{update.message.message_id}.mp3",
                             caption=f'<tg-emoji emoji-id="5307705891313721642">🎧</tg-emoji> <b>Extracted Audio / BGM (MP3)</b>\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Downloaded with</b> @{bot_username}',
                             reply_markup=reply_markup_share,
                             parse_mode="HTML"
@@ -1109,10 +1076,14 @@ def main():
 
     keep_alive()
 
+    # Increase network timeouts for large video files
     application = (
         ApplicationBuilder()
         .token(TOKEN)
         .post_init(post_init)
+        .connect_timeout(60.0)
+        .read_timeout(300.0)
+        .write_timeout(300.0)
         .build()
     )
 
