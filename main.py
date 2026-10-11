@@ -149,7 +149,7 @@ TRANSLATIONS = {
         "video_downloaded": '<tg-emoji emoji-id="530762354187772738">🚀</tg-emoji> <b>Downloaded with</b> @{bot_username} & @mame_posts\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Enjoy!</b>',
         "size_limit": "⚠️ <b>ቪዲዮው ከ 50MB በላይ ስለሆነ በቴሌግራም መላክ አይቻልም!</b>",
         "fail_download": "💔 <b> የፈለጉትን File ማግኘት አልቻልኩም!</b>\n\nእባክዎ የላኩት ሊንክ private አለመሆኑን አረጋግጠው እንደገና ይሞክሩ።",
-        "photo_download": '📸 <b>Downloaded Photo</b>\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Downloaded with</b> @{bot_username}',
+        "photo_download": '📸 <b>Downloaded Thumbnail/Photo</b>\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Downloaded with</b> @{bot_username}',
         "welcome": (
             'Hello <tg-emoji emoji-id="5305577086478489521">🚨</tg-emoji>\n\n'
             '<tg-emoji emoji-id="5305739801314501775">✅</tg-emoji> <b>My options (ከሁሉም Social Media ላይ video, photo እና audio ማውረድና መቀየር ይችላሉ!) :</b>\n\n'
@@ -200,7 +200,7 @@ TRANSLATIONS = {
         "video_downloaded": '<tg-emoji emoji-id="530762354187772738">🚀</tg-emoji> <b>Downloaded with</b> @{bot_username} & @mame_posts\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Enjoy!</b>',
         "size_limit": "⚠️ <b>File is larger than 50MB! Telegram limit exceeded.</b>",
         "fail_download": "💔 <b>Could not download the file! Please check if link is public.</b>",
-        "photo_download": '📸 <b>Downloaded Photo</b>\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Downloaded with</b> @{bot_username}',
+        "photo_download": '📸 <b>Downloaded Thumbnail/Photo</b>\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Downloaded with</b> @{bot_username}',
         "welcome": (
             'Hello <tg-emoji emoji-id="5305577086478489521">🚨</tg-emoji>\n\n'
             '<tg-emoji emoji-id="5305739801314501775">✅</tg-emoji> <b>My options (You can download video, photo, and audio from all Social Media):</b>\n\n'
@@ -251,7 +251,7 @@ TRANSLATIONS = {
         "video_downloaded": '<tg-emoji emoji-id="530762354187772738">🚀</tg-emoji> <b>تم التحميل بواسطة</b> @{bot_username} & @mame_posts\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>استمتع!</b>',
         "size_limit": "⚠️ <b>حجم الملف أكبر من 50 ميغابايت!</b>",
         "fail_download": "💔 <b>تعذر تحميل الملف! يرجى التأكد من أن الرابط عام.</b>",
-        "photo_download": '📸 <b>الصورة المحملة</b>\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>تم التحميل بواسطة</b> @{bot_username}',
+        "photo_download": '📸 <b>الصورة / الصورة المصغرة المحملة</b>\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>تم التحميل بواسطة</b> @{bot_username}',
         "welcome": (
             'مرحباً بك <tg-emoji emoji-id="5305577086478489521">🚨</tg-emoji>\n\n'
             '<tg-emoji emoji-id="5305739801314501775">✅</tg-emoji> <b>خياراتي (يمكنك تحميل وتعديل الفيديوهات والصور والصوتيات من جميع منصات التواصل الاجتماعي):</b>\n\n'
@@ -524,7 +524,7 @@ async def broadcast_command(update, context):
     )
 
 # ============================================================
-# VIDEO TO AUDIO CONVERTER
+# VIDEO TO AUDIO CONVERTER (DIRECT TELEGRAM MEDIA)
 # ============================================================
 
 async def convert_video_to_audio(update, context):
@@ -599,7 +599,7 @@ async def convert_video_to_audio(update, context):
                     pass
 
 # ============================================================
-# MODERN URL DOWNLOAD ENGINE (WITH YOUTUBE FIX)
+# MODERN URL DOWNLOAD ENGINE (VIDEO + AUDIO + THUMBNAIL)
 # ============================================================
 
 def unshorten_url(url: str) -> str:
@@ -612,7 +612,19 @@ def unshorten_url(url: str) -> str:
         return url
 
 def clean_url(raw_url: str) -> str:
-    return unshorten_url(raw_url)
+    url = unshorten_url(raw_url)
+    
+    # Strip tracking parameters (?si=..., ?feature=...)
+    url = re.sub(r'(\?|&)si=[^&]+', '', url)
+    url = re.sub(r'(\?|&)feature=[^&]+', '', url)
+    
+    # Convert YouTube Shorts directly to standard watch link
+    shorts_match = re.search(r'youtube\.com/shorts/([a-zA-Z0-9_-]+)', url)
+    if shorts_match:
+        video_id = shorts_match.group(1)
+        return f"https://www.youtube.com/watch?v={video_id}"
+        
+    return url
 
 def get_video_options(url: str, output_template: str, fallback: bool = False):
     is_youtube = any(domain in url.lower() for domain in ["youtube.com", "youtu.be"])
@@ -624,9 +636,10 @@ def get_video_options(url: str, output_template: str, fallback: bool = False):
         'geo_bypass': True,
         'concurrent_fragment_downloads': 5,
         'outtmpl': output_template,
+        'writethumbnail': True,  # Download Thumbnail cover automatically
         'merge_output_format': 'mp4',
         'http_headers': {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
             'Accept-Language': 'en-US,en;q=0.9',
         }
@@ -634,19 +647,17 @@ def get_video_options(url: str, output_template: str, fallback: bool = False):
 
     if is_youtube:
         if fallback:
-            # Fallback 1: Combined 720p/360p pre-merged progressive stream
             opts['format'] = 'best[ext=mp4][filesize<50M]/best[filesize<50M]/best'
             opts['extractor_args'] = {
                 'youtube': {
-                    'player_client': ['ios', 'android']
+                    'player_client': ['android', 'ios']
                 }
             }
         else:
-            # Primary: Best video + best audio merged, cap at 45MB to respect Telegram limits
             opts['format'] = 'bestvideo[ext=mp4][filesize<45M]+bestaudio[ext=m4a]/best[ext=mp4][filesize<50M]/best[filesize<50M]/best'
             opts['extractor_args'] = {
                 'youtube': {
-                    'player_client': ['android', 'ios', 'web_creator']
+                    'player_client': ['ios', 'android', 'mweb']
                 }
             }
     else:
@@ -667,10 +678,16 @@ def download_media_func(url: str, output_template: str, fallback: bool = False):
         ydl.download([url])
 
 def find_downloaded_file(prefix: str):
+    video_file = None
+    thumb_file = None
     for f in os.listdir('.'):
         if f.startswith(prefix) and not f.endswith(('.part', '.ytdl', '.temp')):
-            return f
-    return None
+            ext = os.path.splitext(f)[1].lower()
+            if ext in ['.jpg', '.jpeg', '.png', '.webp']:
+                thumb_file = f
+            elif ext in ['.mp4', '.mkv', '.webm', '.mov', '.avi']:
+                video_file = f
+    return video_file, thumb_file
 
 async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE, raw_url: str):
     chat_id = update.effective_chat.id
@@ -689,7 +706,7 @@ async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE
 
     url = clean_url(raw_url)
 
-    # Direct Pinterest Image extraction
+    # 1. Direct Pinterest image extraction
     if "pinterest.com" in url or "pin.it" in url:
         try:
             headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
@@ -714,71 +731,76 @@ async def handle_url_download(update: Update, context: ContextTypes.DEFAULT_TYPE
     sent_any = False
 
     try:
+        # Download media
         try:
             await asyncio.to_thread(download_media_func, url, media_template, False)
         except Exception as err1:
             print("Download primary failed, trying client fallback:", err1)
             await asyncio.to_thread(download_media_func, url, media_template, True)
 
-        actual_file = find_downloaded_file(media_prefix)
+        actual_video, actual_thumb = find_downloaded_file(media_prefix)
 
-        if actual_file and os.path.exists(actual_file):
-            ext = os.path.splitext(actual_file)[1].lower()
-
-            if ext in ['.jpg', '.jpeg', '.png', '.webp']:
-                await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_DOCUMENT)
-                with open(actual_file, 'rb') as pf:
+        # 2. SEND THUMBNAIL (IF AVAILABLE)
+        if actual_thumb and os.path.exists(actual_thumb):
+            try:
+                await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_PHOTO)
+                with open(actual_thumb, 'rb') as tf:
                     await update.message.reply_photo(
-                        photo=pf,
+                        photo=tf,
                         caption=get_trans(user_id, "photo_download").format(bot_username=bot_username),
                         reply_markup=reply_markup_share,
                         parse_mode="HTML"
                     )
                 sent_any = True
+            except Exception as thumb_err:
+                print("Thumbnail send error:", thumb_err)
+
+        # 3. SEND VIDEO
+        if actual_video and os.path.exists(actual_video):
+            if os.path.getsize(actual_video) <= 50 * 1024 * 1024:
+                await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_VIDEO)
+                try:
+                    with open(actual_video, 'rb') as vf:
+                        await update.message.reply_video(
+                            video=vf,
+                            caption=f'<tg-emoji emoji-id="530762354187772738">🚀</tg-emoji> <b>Downloaded with</b> @{bot_username} & @mame_posts\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Enjoy!</b>',
+                            reply_markup=reply_markup_share,
+                            parse_mode="HTML",
+                            supports_streaming=True
+                        )
+                    sent_any = True
+                except Exception as vid_err:
+                    print("reply_video failed, falling back to document:", vid_err)
+                    with open(actual_video, 'rb') as doc_file:
+                        await update.message.reply_document(
+                            document=doc_file,
+                            caption=f'<tg-emoji emoji-id="530762354187772738">🚀</tg-emoji> <b>Downloaded with</b> @{bot_username} & @mame_posts',
+                            reply_markup=reply_markup_share,
+                            parse_mode="HTML"
+                        )
+                    sent_any = True
+
+                # 4. EXTRACT & SEND BACKGROUND MUSIC / AUDIO (MP3)
+                audio_output = f"audio_{user_id}_{update.message.message_id}.mp3"
+                ffmpeg_bin = FFMPEG_PATH if FFMPEG_PATH else "ffmpeg"
+                cmd = [ffmpeg_bin, "-y", "-i", actual_video, "-vn", "-acodec", "libmp3lame", "-q:a", "2", audio_output]
+                await asyncio.to_thread(subprocess.run, cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+                if os.path.exists(audio_output) and os.path.getsize(audio_output) > 0:
+                    await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.RECORD_VOICE)
+                    with open(audio_output, 'rb') as af:
+                        await update.message.reply_audio(
+                            audio=af,
+                            caption=f'<tg-emoji emoji-id="5307705891313721642">🎧</tg-emoji> <b>Extracted Audio / BGM (MP3)</b>\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Downloaded with</b> @{bot_username}',
+                            reply_markup=reply_markup_share,
+                            parse_mode="HTML"
+                        )
+                    os.remove(audio_output)
+                    sent_any = True
             else:
-                if os.path.getsize(actual_file) <= 50 * 1024 * 1024:
-                    await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_DOCUMENT)
-                    try:
-                        with open(actual_file, 'rb') as vf:
-                            await update.message.reply_video(
-                                video=vf,
-                                caption=f'<tg-emoji emoji-id="530762354187772738">🚀</tg-emoji> <b>Downloaded with</b> @{bot_username} & @mame_posts\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Enjoy!</b>',
-                                reply_markup=reply_markup_share,
-                                parse_mode="HTML",
-                                supports_streaming=True
-                            )
-                        sent_any = True
-                    except Exception as vid_err:
-                        print("reply_video failed, document fallback:", vid_err)
-                        with open(actual_file, 'rb') as doc_file:
-                            await update.message.reply_document(
-                                document=doc_file,
-                                caption=f'<tg-emoji emoji-id="530762354187772738">🚀</tg-emoji> <b>Downloaded with</b> @{bot_username} & @mame_posts',
-                                reply_markup=reply_markup_share,
-                                parse_mode="HTML"
-                            )
-                        sent_any = True
+                await status_msg.edit_text(get_trans(user_id, "size_limit"), parse_mode="HTML")
+                return
 
-                    # Extract Audio
-                    audio_output = f"audio_{user_id}_{update.message.message_id}.mp3"
-                    ffmpeg_bin = FFMPEG_PATH if FFMPEG_PATH else "ffmpeg"
-                    cmd = [ffmpeg_bin, "-y", "-i", actual_file, "-vn", "-acodec", "libmp3lame", "-q:a", "2", audio_output]
-                    await asyncio.to_thread(subprocess.run, cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
-                    if os.path.exists(audio_output) and os.path.getsize(audio_output) > 0:
-                        await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_DOCUMENT)
-                        with open(audio_output, 'rb') as af:
-                            await update.message.reply_audio(
-                                audio=af,
-                                caption=f'<tg-emoji emoji-id="5307705891313721642">🎧</tg-emoji> <b>Extracted Audio (MP3)</b>\n\n<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>Downloaded with</b> @{bot_username}',
-                                reply_markup=reply_markup_share,
-                                parse_mode="HTML"
-                            )
-                        os.remove(audio_output)
-                        sent_any = True
-                else:
-                    await status_msg.edit_text(get_trans(user_id, "size_limit"), parse_mode="HTML")
-                    return
     except Exception as e:
         print("Media Download Execution Error:", e)
 
@@ -883,178 +905,4 @@ async def button_callback(update, context):
         return
 
 async def check_join(update, context):
-    query = update.callback_query
-    user_id = query.from_user.id
-    try:
-        member = await context.bot.get_chat_member(chat_id=FORCE_CHANNEL, user_id=user_id)
-        if member.status in ["member", "administrator", "creator"]:
-            await query.answer()
-            try:
-                await query.edit_message_text(
-                    '<tg-emoji emoji-id="5260463209562776385">✅</tg-emoji> <b>አሁን ቻናሉን ተቀላቅለዋል።</b>\n\nእባክዎ የላኩትን ሊንክ ደግመው ይላኩ።',
-                    parse_mode="HTML"
-                )
-            except Exception:
-                pass
-        else:
-            await query.answer("❌ እባክዎ መጀመሪያ Channel ይቀላቀሉ!", show_alert=True)
-    except Exception:
-        await query.answer("⚠️ Channel membership could not be verified.", show_alert=True)
-
-SUPPORTED_DOMAINS = [
-    "youtube.com", "youtu.be", "tiktok.com", "likee.video", "likee.com",
-    "pinterest.com", "pin.it", "instagram.com", "twitter.com", "x.com",
-    "facebook.com", "fb.watch", "reddit.com", "redd.it", "twitch.tv",
-    "vimeo.com", "vk.com", "ok.ru", "tumblr.com", "soundcloud.com", "threads.net"
-]
-
-async def handle_user_messages(update, context):
-    if not update.message:
-        return
-
-    user_id = update.effective_user.id
-    record_user_activity(user_id)
-
-    if update.message.video or update.message.video_note:
-        await convert_video_to_audio(update, context)
-        return
-
-    document = update.message.document
-    if document and document.mime_type and document.mime_type.startswith("video/"):
-        await convert_video_to_audio(update, context)
-        return
-
-    text = update.message.text or update.message.caption or ""
-
-    if text.strip() == "🏠 Menu":
-        await send_main_menu(update.effective_chat.id, context, user_id)
-        return
-
-    text_lower = text.lower()
-    is_supported_link = any(domain in text_lower for domain in SUPPORTED_DOMAINS)
-
-    if is_supported_link:
-        if not await is_joined(update, context):
-            await show_force_join(update, context)
-            return
-
-        url_match = re.search(r"https?://[^\s]+", text)
-        target_url = url_match.group(0).rstrip(".,!?)]}") if url_match else text.strip()
-        await handle_url_download(update, context, target_url)
-        return
-
-    # Forward other messages to Admin
-    username = f"@{update.effective_user.username}" if update.effective_user.username else "No username"
-    header_text = (
-        "📩 <b>New User Message</b>\n\n"
-        f"👤 <b>Name:</b> {update.effective_user.full_name}\n"
-        f"🔗 <b>Username:</b> {username}\n"
-        f"🆔 <b>ID:</b> <code>{user_id}</code>"
-    )
-
-    try:
-        header_msg = await context.bot.send_message(chat_id=ADMIN_ID, text=header_text, parse_mode="HTML")
-        forwarded_msg = await update.message.forward(chat_id=ADMIN_ID)
-
-        if "user_mapping" not in context.bot_data:
-            context.bot_data["user_mapping"] = {}
-
-        user_mapping = context.bot_data["user_mapping"]
-        user_mapping[str(header_msg.message_id)] = user_id
-        user_mapping[str(forwarded_msg.message_id)] = user_id
-
-        await update.message.reply_text("✅ መልዕክትዎ ተቀብለናል። Admin ያነበበውን መልስ ይልክልዎታል።")
-    except Exception as e:
-        print("Admin forwarding error:", e)
-
-async def admin_reply(update, context):
-    if not update.message or update.effective_user.id != ADMIN_ID:
-        return
-
-    replied_msg = update.message.reply_to_message
-    if not replied_msg:
-        return
-
-    user_mapping = context.bot_data.get("user_mapping", {})
-    target_user_id = None
-    replied_id_str = str(replied_msg.message_id)
-
-    if replied_id_str in user_mapping:
-        target_user_id = user_mapping[replied_id_str]
-
-    if not target_user_id and replied_msg.forward_from:
-        target_user_id = replied_msg.forward_from.id
-
-    if not target_user_id and replied_msg.text and "🆔 ID:" in replied_msg.text:
-        match = re.search(r"🆔 ID:\s*<code>(\d+)</code>", replied_msg.text)
-        if match:
-            target_user_id = int(match.group(1))
-
-    if not target_user_id and replied_msg.caption and "🆔 ID:" in replied_msg.caption:
-        match = re.search(r"🆔 ID:\s*<code>(\d+)</code>", replied_msg.caption)
-        if match:
-            target_user_id = int(match.group(1))
-
-    if target_user_id:
-        try:
-            await update.message.copy(chat_id=target_user_id)
-            await update.message.reply_text("✅ Reply sent to the user.")
-        except Exception as e:
-            await update.message.reply_text(f"❌ Could not send reply.\n{e}")
-    else:
-        await update.message.reply_text("❌ User ID could not be found.")
-
-async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE):
-    print("❌ ERROR:", context.error)
-
-# ============================================================
-# MAIN
-# ============================================================
-
-def main():
-    if not TOKEN:
-        raise RuntimeError("❌ BOT_TOKEN environment variable is missing!")
-
-    keep_alive()
-
-    application = (
-        ApplicationBuilder()
-        .token(TOKEN)
-        .post_init(post_init)
-        .build()
-    )
-
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(CommandHandler("menu", start))
-    application.add_handler(CommandHandler("status", status_command))
-    application.add_handler(CommandHandler("rates", rates_command))
-    application.add_handler(CommandHandler("rate", rates_command))
-    application.add_handler(CommandHandler("payment", payment_command))
-    application.add_handler(CommandHandler("help", help_command))
-    application.add_handler(CommandHandler("broadcast", broadcast_command))
-
-    application.add_handler(CallbackQueryHandler(check_join, pattern=r"^check_join$"))
-    application.add_handler(CallbackQueryHandler(button_callback, pattern=r"^(cmd_|lang_)"))
-
-    admin_filter = filters.User(user_id=ADMIN_ID) & filters.REPLY & ~filters.COMMAND
-    application.add_handler(MessageHandler(admin_filter, admin_reply))
-
-    application.add_handler(MessageHandler(filters.VIDEO | filters.VIDEO_NOTE, convert_video_to_audio))
-
-    type_filter = (
-        filters.TEXT
-        | filters.PHOTO
-        | filters.Document.ALL
-        | filters.VOICE
-        | filters.AUDIO
-        | filters.Sticker.ALL
-    ) & ~filters.COMMAND
-    application.add_handler(MessageHandler(type_filter, handle_user_messages))
-
-    application.add_error_handler(error_handler)
-
-    print("🤖 Mame Posts Bot is running...")
-    application.run_polling(drop_pending_updates=True)
-
-if __name__ == "__main__":
-    main()
+    query = update.callback
